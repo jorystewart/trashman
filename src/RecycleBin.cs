@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using Microsoft.VisualBasic.FileIO;
 using System.IO;
+using System.Security;
 using Shell32;
 
 namespace Trasher;
@@ -44,54 +45,57 @@ public class RecycleBin
 
 
 
-  public static void SendToRecycleBinWrapper(FileSystemInfo file)
+  public static void SendToRecycleBin(FileSystemInfo file)
   {
-    if ((file.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+    switch (file)
     {
-      SendToRecycleBin((DirectoryInfo)file);
-    }
-    else
-    {
-      SendToRecycleBin((FileInfo)file);
+      case FileInfo fileInfo:
+        try
+        {
+          FileSystem.DeleteFile(fileInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+          break;
+        }
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+        {
+          Console.WriteLine("Not found: " + fileInfo.FullName);
+          break;
+        }
+        catch (Exception e) when (e is SecurityException or UnauthorizedAccessException)
+        {
+          Console.WriteLine("Permissions error, cannot delete " + fileInfo.FullName);
+          break;
+        }
+        catch (Exception e)
+        {
+          Console.WriteLine("Error: " + e);
+          break;
+        }
+      case DirectoryInfo directoryInfo:
+        try
+        {
+          FileSystem.DeleteDirectory(directoryInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+          break;
+        }
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+        {
+          Console.WriteLine("Not found: " + directoryInfo.FullName);
+          break;
+        }
+        catch (Exception e) when (e is SecurityException or UnauthorizedAccessException)
+        {
+          Console.WriteLine("Insufficient permissions, cannot delete " + directoryInfo.FullName);
+          break;
+        }
+        catch (Exception e)
+        {
+          Console.WriteLine("Error: " + e);
+          break;
+        }
+      default:
+        Console.WriteLine("Error: " + file.FullName + " is not a file or directory");
+        break;
     }
   }
-
-  private static void SendToRecycleBin(FileInfo file)
-  {
-    try
-    {
-      if (file.Exists)
-      {
-        FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-      }
-    }
-    catch (FileNotFoundException e)
-    {
-      Console.WriteLine("File not found:" + file.FullName);
-    }
-    catch (Exception e)
-    {
-      Console.WriteLine(e);
-      throw;
-    }
-  }
-
-  private static void SendToRecycleBin(DirectoryInfo directory)
-  {
-    try
-    {
-      if (directory.Exists)
-      {
-        FileSystem.DeleteDirectory(directory.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-      }
-    }
-    catch (Exception e)
-    {
-      Console.WriteLine(e);
-      throw;
-    }
-  }
-
 
   public static void RestoreFromRecycleBin(string file)
   {
@@ -260,7 +264,7 @@ public class RecycleBin
         }
         else
         {
-          Console.WriteLine("Error"); // TODO
+          Console.WriteLine("Error emptying Recycle Bin (HRESULT: " + hResult);
         }
       }
       else

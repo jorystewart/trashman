@@ -49,7 +49,7 @@ namespace Trasher
     {
       if (file.Exists)
       {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBinWrapper(file); }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
       }
     }
 
