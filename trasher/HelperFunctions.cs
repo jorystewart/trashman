@@ -1,8 +1,5 @@
-﻿using System.ComponentModel;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
+﻿using System.Text;
 using System.Numerics;
-using System.Reflection;
 
 namespace Trasher;
 
@@ -26,7 +23,6 @@ public class HelperFunctions
 
   public static void WriteConsoleTable(List<FileDetails> list)
   {
-    //int columnOneWidth = (list.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur).Length);
     int nameColumnWidth = list.Max(r => r.Name.Length) + 2;
     string nameColumnHeader = "Name";
     if (nameColumnWidth < nameColumnHeader.Length) { nameColumnWidth = nameColumnHeader.Length + 2; }
@@ -112,47 +108,38 @@ public class HelperFunctions
       builder.Clear();
 
       int nameColumnPadding = nameColumnWidth - (item.Name.Length);
-      leftPadding = nameColumnPadding / 2;
-      rightPadding = (BitOperations.TrailingZeroCount(nameColumnWidth - (item.Name.Length)) == 0)
-        ? (nameColumnPadding / 2) + 1
-        : nameColumnPadding / 2;
+      leftPadding = 1;
+      rightPadding = nameColumnPadding - leftPadding;
       builder.Append('|');
       builder.Append(' ', leftPadding);
       builder.Append(item.Name);
       builder.Append(' ', rightPadding);
       builder.Append('|');
 
-      bool parseCheck = Int64.TryParse((item.Size.Split(' ')[0]), out long fileBytes);
-      if (!parseCheck)
+      string fileSize = item.Size;
+      if (item.Size.Contains("bytes"))
       {
-        throw new Exception();
+        fileSize = item.Size.Replace("bytes", "B");
       }
-      string fileSize = ConvertBytes(fileBytes);
       int sizeColumnPadding = sizeColumnWidth - (fileSize.Length);
-      leftPadding = sizeColumnPadding / 2;
-      rightPadding = (BitOperations.TrailingZeroCount(sizeColumnPadding) == 0)
-        ? (sizeColumnPadding / 2) + 1
-        : sizeColumnPadding / 2;
+      leftPadding = 1;
+      rightPadding = sizeColumnPadding - leftPadding;
       builder.Append(' ', leftPadding);
       builder.Append(fileSize);
       builder.Append(' ', rightPadding);
       builder.Append('|');
 
       int originalPathColumnPadding = originalPathColumnWidth - (item.OriginalPath.Length);
-      leftPadding = originalPathColumnPadding / 2;
-      rightPadding = (BitOperations.TrailingZeroCount(originalPathColumnPadding) == 0)
-        ? (originalPathColumnPadding / 2) + 1
-        : originalPathColumnPadding / 2;
+      leftPadding = 1;
+      rightPadding = originalPathColumnPadding - leftPadding;
       builder.Append(' ', leftPadding);
       builder.Append(item.OriginalPath);
       builder.Append(' ', rightPadding);
       builder.Append('|');
 
       int timeDeletedColumnPadding = timeDeletedColumnWidth - (item.TimeDeleted.Length);
-      leftPadding = timeDeletedColumnPadding / 2;
-      rightPadding = (BitOperations.TrailingZeroCount(timeDeletedColumnPadding) == 0)
-        ? (timeDeletedColumnPadding / 2) + 1
-        : timeDeletedColumnPadding / 2;
+      leftPadding = 1;
+      rightPadding = timeDeletedColumnPadding - leftPadding;
       builder.Append(' ', leftPadding);
       builder.Append(item.TimeDeleted);
       builder.Append(' ', rightPadding);

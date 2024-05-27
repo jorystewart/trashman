@@ -1,10 +1,5 @@
-﻿using System;
-using System.CommandLine;
-using System.CommandLine.Invocation;
+﻿using System.CommandLine;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using Shell32;
-
 
 namespace Trasher
 {
@@ -52,40 +47,50 @@ namespace Trasher
 
     static void DeleteHandler(FileSystemInfo file)
     {
-      RecycleBin.SendToTrashWrapper(file);
+      if (file.Exists)
+      {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBinWrapper(file); }
+      }
     }
 
     static void RestoreHandler(string file)
     {
-      RecycleBin.RestoreFromTrash(file);
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.RestoreFromRecycleBin(file); }
     }
 
     static void ListHandler()
     {
-      List<FileDetails> itemsList = RecycleBin.GetTrashItems();
-      if (itemsList.Count > 0)
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
       {
-        HelperFunctions.WriteConsoleTable(itemsList);
-      }
-      else
-      {
-        Console.WriteLine("Trash is empty.");
+        List<FileDetails> itemsList = RecycleBin.GetRecycleBinItems();
+        if (itemsList.Count > 0)
+        {
+          HelperFunctions.WriteConsoleTable(itemsList);
+        }
+        else
+        {
+          Console.WriteLine("Trash is empty.");
+        }
       }
     }
 
     static void EmptyHandler()
     {
-      RecycleBin.EmptyTrashContents();
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.EmptyRecycleBinContents(); }
     }
 
     static void PurgeHandler(string file)
     {
-      RecycleBin.PurgeFromTrash(file);
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
     }
 
     static void TestHandler(string file)
     {
-      RecycleBin.RestoreFromTrash(file);
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+      {
+        RecycleBin.PurgeFromRecycleBin(file);
+      }
+
     }
 
 

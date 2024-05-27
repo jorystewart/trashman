@@ -1,11 +1,8 @@
-﻿SHFileOperation
-SHQueryRecycleBinW
+﻿SHQueryRecycleBinW
 SHEmptyRecycleBinW
-_SHFILEOPSTRUCT
-_SHQUERYRBINFO
+SHQUERYRBINFO
 SHGetKnownFolderPath
 IShellItem
 IShellItem2
 SHGetKnownFolderItem
 IEnumShellItems
-IID_PPV_ARGS
