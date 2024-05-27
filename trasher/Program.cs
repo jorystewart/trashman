@@ -3,13 +3,13 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Shell32;
 
 
 namespace Trasher
 {
   public static class Trasher
   {
-    [STAThread]
     static async Task<int> Main(string[] args)
     {
       RootCommand rootCommand = new RootCommand("CLI trash/recycle bin management tool");
@@ -21,6 +21,7 @@ namespace Trasher
       Command testCommand = new Command(name: "test", description: "For testing purposes");
 
       Argument<FileSystemInfo> fileArg = new Argument<FileSystemInfo>(name: "file", description: "Target file");
+      Argument<string> searchArg = new Argument<string>(name: "file", description: "File name to search for");
 
 
       rootCommand.AddCommand(deleteCommand);
@@ -31,21 +32,17 @@ namespace Trasher
       rootCommand.AddCommand(testCommand);
 
       deleteCommand.AddArgument(fileArg);
-      restoreCommand.AddArgument(fileArg);
-      purgeCommand.AddArgument(fileArg);
+      restoreCommand.AddArgument(searchArg);
+      purgeCommand.AddArgument(searchArg);
 
       deleteCommand.SetHandler(DeleteHandler, fileArg);
-
-      restoreCommand.SetHandler(file =>
-      {
-        RestoreHandler();
-      }, fileArg);
-
+      restoreCommand.SetHandler(RestoreHandler, searchArg);
       listCommand.SetHandler(ListHandler);
       emptyCommand.SetHandler(EmptyHandler);
-      purgeCommand.SetHandler(PurgeHandler);
+      purgeCommand.SetHandler(PurgeHandler, searchArg);
 
-      testCommand.SetHandler(TestHandler);
+      testCommand.AddArgument(searchArg);
+      testCommand.SetHandler(TestHandler, searchArg);
 
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -55,26 +52,25 @@ namespace Trasher
 
     static void DeleteHandler(FileSystemInfo file)
     {
-      if ((file.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
-      {
-        RecycleBin.SendToTrash((DirectoryInfo)file);
-      }
-      else
-      {
-        RecycleBin.SendToTrash((FileInfo)file);
-      }
+      RecycleBin.SendToTrashWrapper(file);
     }
 
-    static void RestoreHandler()
+    static void RestoreHandler(string file)
     {
-      Console.WriteLine("Not implemented");
-
+      RecycleBin.RestoreFromTrash(file);
     }
 
     static void ListHandler()
     {
-      List<FileDetails> itemsList = RecycleBin.GetRecycleBinItems();
-      HelperFunctions.WriteConsoleTable(itemsList);
+      List<FileDetails> itemsList = RecycleBin.GetTrashItems();
+      if (itemsList.Count > 0)
+      {
+        HelperFunctions.WriteConsoleTable(itemsList);
+      }
+      else
+      {
+        Console.WriteLine("Trash is empty.");
+      }
     }
 
     static void EmptyHandler()
@@ -82,15 +78,14 @@ namespace Trasher
       RecycleBin.EmptyTrashContents();
     }
 
-    static void PurgeHandler()
+    static void PurgeHandler(string file)
     {
-      Console.WriteLine("Not implemented");
+      RecycleBin.PurgeFromTrash(file);
     }
 
-    static void TestHandler()
+    static void TestHandler(string file)
     {
-      List<FileDetails> itemsList = RecycleBin.GetRecycleBinItems();
-      HelperFunctions.WriteConsoleTable(itemsList);
+      RecycleBin.RestoreFromTrash(file);
     }
 
 

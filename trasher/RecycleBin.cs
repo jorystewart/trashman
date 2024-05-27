@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Data;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -7,6 +8,7 @@ using Shell32;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
+using System.Linq;
 
 namespace Trasher;
 
@@ -73,7 +75,20 @@ public class RecycleBin
   #endregion
 
 
-  public static void SendToTrash(FileInfo file)
+
+  public static void SendToTrashWrapper(FileSystemInfo file)
+  {
+    if ((file.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+    {
+      SendToTrash((DirectoryInfo)file);
+    }
+    else
+    {
+      SendToTrash((FileInfo)file);
+    }
+  }
+
+  private static void SendToTrash(FileInfo file)
   {
     try
     {
@@ -93,7 +108,7 @@ public class RecycleBin
     }
   }
 
-  public static void SendToTrash(DirectoryInfo directory)
+  private static void SendToTrash(DirectoryInfo directory)
   {
     try
     {
@@ -109,16 +124,127 @@ public class RecycleBin
     }
   }
 
-  static void RestoreFromTrash(FileInfo file)
+  public static List<FolderItem> SearchTrash(string file)
   {
-
+    List<FolderItem> matches = new List<FolderItem>();
+    if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
+    {
+      Shell shell = new Shell();
+      Folder trashFolder = shell.NameSpace(10);
+      FolderItems trashItems = trashFolder.Items();
+      IEnumerable<FolderItem> collection = trashItems.Cast<FolderItem>();
+      IEnumerable<FolderItem> query = from item in collection
+        where item.Name.Contains(file)
+        select item;
+      foreach (FolderItem match in query)
+      {
+        matches.Add(match);
+      }
+      return matches;
+    }
+    else
+    {
+      Thread staThread = new Thread(
+        () => { matches = SearchTrashSTA(file); });
+      staThread.SetApartmentState(ApartmentState.STA);
+      staThread.Start();
+      staThread.Join();
+      return matches;
+    }
   }
+  private static List<FolderItem> SearchTrashSTA(string file)
+  {
+    Shell shell = new Shell();
+    Folder trashFolder = shell.NameSpace(10);
+    FolderItems trashItems = trashFolder.Items();
+    List<FolderItem> matches = new List<FolderItem>();
+    IEnumerable<FolderItem> collection = trashItems.Cast<FolderItem>();
+    IEnumerable<FolderItem> query = from item in collection
+      where item.Name.Contains(file)
+      select item;
+    foreach (FolderItem match in query)
+    {
+      matches.Add(match);
+    }
+    return matches;
+  }
+
+  public static void RestoreFromTrash(string file)
+  {
+    if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
+    {
+      Shell shell = new Shell();
+      Folder trashFolder = shell.NameSpace(10);
+      FolderItems trashItems = trashFolder.Items();
+      IEnumerable<FolderItem> collection = trashItems.Cast<FolderItem>();
+      IEnumerable<FolderItem> query = from item in collection
+        where item.Name.Contains(file)
+        select item;
+      if (query.Count() == 1)
+      {
+        Console.WriteLine("Restoring...");
+        foreach (FolderItem item in query)
+        {
+          foreach (FolderItemVerb verb in item.Verbs())
+          {
+            if (verb.Name.Contains("Restore"))
+            {
+              verb.DoIt();
+            }
+          }
+        }
+      }
+      else
+      {
+        Console.WriteLine("Multiple matches detected, refine search");
+      }
+    }
+    else
+    {
+      Thread staThread = new Thread(
+        () => { RestoreFromTrashSTA(file); });
+      staThread.SetApartmentState(ApartmentState.STA);
+      staThread.Start();
+      staThread.Join();
+    }
+  }
+
+  private static void RestoreFromTrashSTA(string file)
+  {
+    Shell shell = new Shell();
+    Folder trashFolder = shell.NameSpace(10);
+    FolderItems trashItems = trashFolder.Items();
+    IEnumerable<FolderItem> collection = trashItems.Cast<FolderItem>();
+    IEnumerable<FolderItem> query = from item in collection
+      where item.Name.Contains(file)
+      select item;
+    if (query.Count() == 1)
+    {
+      Console.WriteLine("Restoring...");
+      foreach (FolderItem item in query)
+      {
+        foreach (FolderItemVerb verb in item.Verbs())
+        {
+          if (verb.Name.Contains("Restore") || (verb.Name.Contains("R&estore")))
+          {
+            verb.DoIt();
+          }
+        }
+      }
+    }
+    else
+    {
+      Console.WriteLine("Multiple matches detected, refine search");
+    }
+  }
+
+
 
   public static Tuple<long,long> GetTrashContentInfo()
   {
-    SHQUERYRBINFO recycleBinQueryInfo = new SHQUERYRBINFO();
-    recycleBinQueryInfo.cbSize = Marshal.SizeOf(typeof(SHQUERYRBINFO));
-    int queryHResult = SHQueryRecycleBinW(String.Empty, ref recycleBinQueryInfo);
+    SHQUERYRBINFO trashQueryInfo = new SHQUERYRBINFO();
+    trashQueryInfo.cbSize = Marshal.SizeOf(typeof(SHQUERYRBINFO));
+    int queryHResult = SHQueryRecycleBinW(String.Empty, ref trashQueryInfo);
     if (queryHResult != 0)
     {
       Console.WriteLine("Error querying Recycle Bin contents. HRESULT: " + queryHResult);
@@ -126,66 +252,70 @@ public class RecycleBin
     }
     else
     {
-      return new Tuple<long, long>(recycleBinQueryInfo.i64NumItems, recycleBinQueryInfo.i64Size);
+      return new Tuple<long, long>(trashQueryInfo.i64NumItems, trashQueryInfo.i64Size);
     }
   }
 
 
-  public static List<FileDetails> GetRecycleBinItems()
+  public static List<FileDetails> GetTrashItems()
   {
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
-      List<FileDetails> recycleBinItems = new List<FileDetails>();
+      List<FileDetails> trashItems = new List<FileDetails>();
       Shell shell = new Shell();
-      Folder recycleBinFolder = shell.NameSpace(10);
+      Folder trashFolder = shell.NameSpace(10);
 
-      for (int i = 0; i < recycleBinFolder.Items().Count; i++)
+      if (trashFolder.Items().Count < 1)
       {
-        FolderItem folderItem = recycleBinFolder.Items().Item(i);
+        return trashItems;
+      }
+      for (int i = 0; i < trashFolder.Items().Count; i++)
+      {
+        FolderItem folderItem = trashFolder.Items().Item(i);
         FileDetails fileDetails = new FileDetails()
         {
-          Name = recycleBinFolder.GetDetailsOf(folderItem, 0),
-          Size = recycleBinFolder.GetDetailsOf(folderItem, 3),
-          OriginalPath = recycleBinFolder.GetDetailsOf(folderItem, 1),
-          TimeDeleted = (recycleBinFolder.GetDetailsOf(folderItem, 2)).Replace("?", "").TrimStart().TrimEnd()
+          Name = trashFolder.GetDetailsOf(folderItem, 0),
+          Size = trashFolder.GetDetailsOf(folderItem, 3),
+          OriginalPath = trashFolder.GetDetailsOf(folderItem, 1),
+          TimeDeleted = (trashFolder.GetDetailsOf(folderItem, 2)).Replace("?", "").TrimStart().TrimEnd()
         };
-        recycleBinItems.Add(fileDetails);
+        trashItems.Add(fileDetails);
       }
-      return recycleBinItems;
+      return trashItems;
     }
     else
     {
-      List<FileDetails> recycleBinItems = new List<FileDetails>();
+      List<FileDetails> trashItems = new List<FileDetails>();
       Thread staThread = new Thread(
-        () => { recycleBinItems = GetRecycleBinItemsSTA(); });
+        () => { trashItems = GetTrashItemsSTA(); });
       staThread.SetApartmentState(ApartmentState.STA);
       staThread.Start();
       staThread.Join();
-      return recycleBinItems;
+      return trashItems;
     }
   }
 
 
-  private static List<FileDetails> GetRecycleBinItemsSTA()
+  private static List<FileDetails> GetTrashItemsSTA()
   {
-    List<FileDetails> recycleBinItems = new List<FileDetails>();
+    List<FileDetails> trashItems = new List<FileDetails>();
     Shell shell = new Shell();
-    Folder recycleBinFolder = shell.NameSpace(10);
+    Folder trashFolder = shell.NameSpace(10);
 
-    for (int i = 0; i < recycleBinFolder.Items().Count; i++)
+    for (int i = 0; i < trashFolder.Items().Count; i++)
     {
-      FolderItem folderItem = recycleBinFolder.Items().Item(i);
+      FolderItem folderItem = trashFolder.Items().Item(i);
       FileDetails fileDetails = new FileDetails()
       {
-        Name = recycleBinFolder.GetDetailsOf(folderItem, 0),
-        Size = recycleBinFolder.GetDetailsOf(folderItem, 3),
-        OriginalPath = recycleBinFolder.GetDetailsOf(folderItem, 1),
-        TimeDeleted = (recycleBinFolder.GetDetailsOf(folderItem, 2)).Replace("?", "")
+        Name = trashFolder.GetDetailsOf(folderItem, 0),
+        Size = trashFolder.GetDetailsOf(folderItem, 3),
+        OriginalPath = trashFolder.GetDetailsOf(folderItem, 1),
+        TimeDeleted = (trashFolder.GetDetailsOf(folderItem, 2)).Replace("?", "")
       };
-      recycleBinItems.Add(fileDetails);
+      trashItems.Add(fileDetails);
     }
 
-    return recycleBinItems;
+    return trashItems;
   }
 
 
@@ -217,5 +347,76 @@ public class RecycleBin
       }
     }
   }
+
+  public static void PurgeFromTrash(string file)
+  {
+    if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
+    {
+      Shell shell = new Shell();
+      Folder trashFolder = shell.NameSpace(10);
+      FolderItems trashItems = trashFolder.Items();
+      IEnumerable<FolderItem> collection = trashItems.Cast<FolderItem>();
+      IEnumerable<FolderItem> query = from item in collection
+        where item.Name.Contains(file)
+        select item;
+      if (query.Count() == 1)
+      {
+        Console.WriteLine("Purging...");
+        foreach (FolderItem item in query)
+        {
+          foreach (FolderItemVerb verb in item.Verbs())
+          {
+            if (verb.Name.Contains("Delete") || (verb.Name.Contains("&Delete")))
+            {
+              verb.DoIt();
+            }
+          }
+        }
+      }
+      else
+      {
+        Console.WriteLine("Multiple matches detected, refine search");
+      }
+    }
+    else
+    {
+      Thread staThread = new Thread(
+        () => { PurgeFromTrashSTA(file); });
+      staThread.SetApartmentState(ApartmentState.STA);
+      staThread.Start();
+      staThread.Join();
+    }
+  }
+
+  private static void PurgeFromTrashSTA(string file)
+  {
+    Shell shell = new Shell();
+    Folder trashFolder = shell.NameSpace(10);
+    FolderItems trashItems = trashFolder.Items();
+    IEnumerable<FolderItem> collection = trashItems.Cast<FolderItem>();
+    IEnumerable<FolderItem> query = from item in collection
+      where item.Name.Contains(file)
+      select item;
+    if (query.Count() == 1)
+    {
+      Console.WriteLine("Purging...");
+      foreach (FolderItem item in query)
+      {
+        foreach (FolderItemVerb verb in item.Verbs())
+        {
+          if (verb.Name.Contains("Delete") || (verb.Name.Contains("&Delete")))
+          {
+            verb.DoIt();
+          }
+        }
+      }
+    }
+    else
+    {
+      Console.WriteLine("Multiple matches detected, refine search");
+    }
+  }
+
+
 
 }
