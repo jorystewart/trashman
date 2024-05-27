@@ -1,3 +1,5 @@
 trasher/bin/
 trasher/obj/
 .idea/
+.vs/
+trasher/shell32.dll
