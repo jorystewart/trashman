@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trasher", "trasher\trasher.csproj", "{6C88A002-D2F5-4999-B3EF-3D3348401311}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trasher", "trasher.csproj", "{6C88A002-D2F5-4999-B3EF-3D3348401311}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
