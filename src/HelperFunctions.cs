@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Numerics;
+using System.Reflection;
 
 namespace Trasher;
 
@@ -23,138 +24,135 @@ public class HelperFunctions
 
   public static void WriteConsoleTable(List<FileDetails> list)
   {
+    int consoleWidth = Console.WindowWidth;
+
     int nameColumnWidth = list.Max(r => r.Name.Length) + 2;
     string nameColumnHeader = "Name";
     if (nameColumnWidth < nameColumnHeader.Length) { nameColumnWidth = nameColumnHeader.Length + 2; }
-    int nameHeaderPadding = nameColumnWidth - nameColumnHeader.Length;
-    int nameHeaderLeftPadding = nameHeaderPadding / 2;
-    int nameHeaderRightPadding = (BitOperations.TrailingZeroCount(nameHeaderPadding) == 0)
-      ? (nameHeaderPadding / 2) + 1
-      : nameHeaderPadding / 2;
 
     int sizeColumnWidth = 7 + 2;
     string sizeColumnHeader = "Size";
-    int sizeHeaderPadding = sizeColumnWidth - sizeColumnHeader.Length;
-    int sizeHeaderLeftPadding = sizeHeaderPadding / 2;
-    int sizeHeaderRightPadding = (BitOperations.TrailingZeroCount(sizeHeaderPadding) == 0)
-      ? (sizeHeaderPadding / 2) + 1
-      : (sizeHeaderPadding / 2);
 
     int timeDeletedColumnWidth = list.Max(r => r.TimeDeleted.Length) + 2;
-    string timeDeletedColumnHeader = "Deletion Time";
+    string timeDeletedColumnHeader = "Time Deleted";
     if (timeDeletedColumnWidth < timeDeletedColumnHeader.Length) { timeDeletedColumnWidth = timeDeletedColumnHeader.Length + 2; }
-    int timeDeletedHeaderPadding = timeDeletedColumnWidth - timeDeletedColumnHeader.Length;
-    int timeDeletedHeaderLeftPadding = timeDeletedHeaderPadding / 2;
-    int timeDeletedHeaderRightPadding = (BitOperations.TrailingZeroCount(timeDeletedHeaderPadding) == 0)
-      ? (timeDeletedHeaderPadding / 2) + 1
-      : timeDeletedHeaderPadding / 2;
 
     int originalPathColumnWidth = list.Max(r => r.OriginalPath.Length) + 2;
     string originalPathColumnHeader = "Original Path";
     if (originalPathColumnWidth < originalPathColumnHeader.Length) { originalPathColumnWidth = originalPathColumnHeader.Length + 2; }
-    int originalPathHeaderPadding = originalPathColumnWidth - originalPathColumnHeader.Length;
-    int originalPathHeaderLeftPadding = originalPathHeaderPadding / 2;
-    int originalPathHeaderRightPadding = (BitOperations.TrailingZeroCount(originalPathHeaderPadding) == 0)
-      ? (originalPathHeaderPadding / 2) + 1
-      : originalPathHeaderPadding / 2;
 
+    Dictionary<string, int> columnHeaderInfo = new Dictionary<string, int>();
 
-    int tableWidth = nameColumnWidth + sizeColumnWidth + timeDeletedColumnWidth + originalPathColumnWidth + 13;
+    if (consoleWidth > nameColumnWidth + 2)
+    {
+      columnHeaderInfo.Add(nameColumnHeader, nameColumnWidth);
+    }
+
+    if (consoleWidth > (nameColumnWidth + sizeColumnWidth + 3))
+    {
+      columnHeaderInfo.Add(sizeColumnHeader, sizeColumnWidth);
+    }
+
+    if (consoleWidth > (nameColumnWidth + sizeColumnWidth + originalPathColumnWidth + 4))
+    {
+      columnHeaderInfo.Add(originalPathColumnHeader, originalPathColumnWidth);
+    }
+
+    if (consoleWidth > (nameColumnWidth + sizeColumnWidth + originalPathColumnWidth + timeDeletedColumnWidth + 5))
+    {
+      columnHeaderInfo.Add(timeDeletedColumnHeader, timeDeletedColumnWidth);
+    }
+
+    WriteColumnHeaders(columnHeaderInfo);
+
+    columnHeaderInfo = columnHeaderInfo.ToDictionary(
+      keyValue => keyValue.Key.Replace(" ", ""),
+      keyValue => keyValue.Value
+    );
+
+    WriteTableInfo(list, columnHeaderInfo);
+
+  }
+
+  private static void WriteColumnHeaders(Dictionary<string, int> columnsInfo)
+  {
     StringBuilder builder = new StringBuilder();
-    builder.Append('+');
-    builder.Append('-', nameColumnWidth);
-    builder.Append('+');
-    builder.Append('-', sizeColumnWidth);
-    builder.Append('+');
-    builder.Append('-', originalPathColumnWidth);
-    builder.Append('+');
-    builder.Append('-', timeDeletedColumnWidth);
+
+    foreach (KeyValuePair<string, int> column in columnsInfo)
+    {
+      builder.Append('+');
+      builder.Append('-', column.Value);
+    }
+
     builder.Append('+');
     Console.WriteLine(builder.ToString());
     builder.Clear();
-    builder.Append('|');
-    builder.Append(' ', nameHeaderLeftPadding);
-    builder.Append(nameColumnHeader);
-    builder.Append(' ', nameHeaderRightPadding);
-    builder.Append('|');
-    builder.Append(' ', sizeHeaderLeftPadding);
-    builder.Append(sizeColumnHeader);
-    builder.Append(' ', sizeHeaderRightPadding);
-    builder.Append('|');
-    builder.Append(' ', originalPathHeaderLeftPadding);
-    builder.Append(originalPathColumnHeader);
-    builder.Append(' ', originalPathHeaderRightPadding);
-    builder.Append('|');
-    builder.Append(' ', timeDeletedHeaderLeftPadding);
-    builder.Append(timeDeletedColumnHeader);
-    builder.Append(' ', timeDeletedHeaderRightPadding);
+
+    foreach (KeyValuePair<string, int> column in columnsInfo)
+    {
+      int totalPadding = column.Value - column.Key.Length;
+      int leftPadding = totalPadding / 2;
+      int rightPadding = (BitOperations.TrailingZeroCount(totalPadding) == 0)
+        ? (totalPadding / 2) + 1
+        : totalPadding / 2;
+
+      builder.Append('|');
+      builder.Append(' ', leftPadding);
+      builder.Append(column.Key);
+      builder.Append(' ', rightPadding);
+    }
+
     builder.Append('|');
     Console.WriteLine(builder.ToString());
     builder.Clear();
-    builder.Append('+');
-    builder.Append('-', nameColumnWidth);
-    builder.Append('+');
-    builder.Append('-', sizeColumnWidth);
-    builder.Append('+');
-    builder.Append('-', originalPathColumnWidth);
-    builder.Append('+');
-    builder.Append('-', timeDeletedColumnWidth);
+
+    foreach (KeyValuePair<string, int> column in columnsInfo)
+    {
+      builder.Append('+');
+      builder.Append('-', column.Value);
+    }
+
     builder.Append('+');
     Console.WriteLine(builder.ToString());
+
+  }
+
+  private static void WriteTableInfo(List<FileDetails> list, Dictionary<string, int> columnData)
+  {
+    StringBuilder builder = new StringBuilder();
 
     foreach (FileDetails item in list)
     {
-      int leftPadding, rightPadding = 0;
       builder.Clear();
-
-      int nameColumnPadding = nameColumnWidth - (item.Name.Length);
-      leftPadding = 1;
-      rightPadding = nameColumnPadding - leftPadding;
-      builder.Append('|');
-      builder.Append(' ', leftPadding);
-      builder.Append(item.Name);
-      builder.Append(' ', rightPadding);
-      builder.Append('|');
-
-      string fileSize = item.Size;
-      if (item.Size.Contains("bytes"))
+      foreach (PropertyInfo property in (typeof(FileDetails).GetProperties()))
       {
-        fileSize = item.Size.Replace("bytes", "B");
+        if (columnData.Keys.Contains(property.Name.ToString()))
+        {
+          builder.Append('|');
+          builder.Append(' ');
+          builder.Append(property.GetValue(item));
+
+          bool result = columnData.TryGetValue(property.Name.ToString(), out int keyValue);
+
+          if (result)
+          {
+            int rightPadding = keyValue - property.GetValue(item).ToString().Length - 1;
+            builder.Append(' ', rightPadding);
+          }
+        }
       }
-      int sizeColumnPadding = sizeColumnWidth - (fileSize.Length);
-      leftPadding = 1;
-      rightPadding = sizeColumnPadding - leftPadding;
-      builder.Append(' ', leftPadding);
-      builder.Append(fileSize);
-      builder.Append(' ', rightPadding);
-      builder.Append('|');
-
-      int originalPathColumnPadding = originalPathColumnWidth - (item.OriginalPath.Length);
-      leftPadding = 1;
-      rightPadding = originalPathColumnPadding - leftPadding;
-      builder.Append(' ', leftPadding);
-      builder.Append(item.OriginalPath);
-      builder.Append(' ', rightPadding);
-      builder.Append('|');
-
-      int timeDeletedColumnPadding = timeDeletedColumnWidth - (item.TimeDeleted.Length);
-      leftPadding = 1;
-      rightPadding = timeDeletedColumnPadding - leftPadding;
-      builder.Append(' ', leftPadding);
-      builder.Append(item.TimeDeleted);
-      builder.Append(' ', rightPadding);
       builder.Append('|');
       Console.WriteLine(builder.ToString());
     }
+
     builder.Clear();
-    builder.Append('+');
-    builder.Append('-', nameColumnWidth);
-    builder.Append('+');
-    builder.Append('-', sizeColumnWidth);
-    builder.Append('+');
-    builder.Append('-', originalPathColumnWidth);
-    builder.Append('+');
-    builder.Append('-', timeDeletedColumnWidth);
+
+    foreach (KeyValuePair<string, int> kvp in columnData)
+    {
+      builder.Append('+');
+      builder.Append('-', kvp.Value);
+    }
+
     builder.Append('+');
     Console.WriteLine(builder.ToString());
   }

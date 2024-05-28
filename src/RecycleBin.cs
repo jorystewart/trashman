@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using Microsoft.VisualBasic.FileIO;
-using System.IO;
 using System.Security;
 using Shell32;
 
@@ -202,7 +201,7 @@ public class RecycleBin
         FolderItem folderItem = recycleBinFolder.Items().Item(i);
         FileDetails fileDetails = new FileDetails(
           recycleBinFolder.GetDetailsOf(folderItem, 0),
-          recycleBinFolder.GetDetailsOf(folderItem, 3).TrimStart().TrimEnd(),
+          recycleBinFolder.GetDetailsOf(folderItem, 3).TrimStart().TrimEnd().Replace("bytes", "B"),
           recycleBinFolder.GetDetailsOf(folderItem, 1),
           (recycleBinFolder.GetDetailsOf(folderItem, 2)).Replace("?", "").TrimStart().TrimEnd()
         );
@@ -234,7 +233,7 @@ public class RecycleBin
       FolderItem folderItem = recycleBinFolder.Items().Item(i);
       FileDetails fileDetails = new FileDetails(
         recycleBinFolder.GetDetailsOf(folderItem, 0),
-        recycleBinFolder.GetDetailsOf(folderItem, 3).TrimStart().TrimEnd(),
+        recycleBinFolder.GetDetailsOf(folderItem, 3).TrimStart().TrimEnd().Replace("bytes", "B"),
         recycleBinFolder.GetDetailsOf(folderItem, 1),
         (recycleBinFolder.GetDetailsOf(folderItem, 2)).Replace("?", "").TrimStart().TrimEnd()
       );
@@ -286,18 +285,85 @@ public class RecycleBin
       IEnumerable<FolderItem> query = from item in collection
         where item.Name.Contains(file)
         select item;
-      if (query.Count() == 1)
-      {
+
         Console.WriteLine("Purging...");
         foreach (FolderItem item in query)
         {
-          File.Delete(item.Path);
+          if (item.IsFileSystem == false)
+          {
+            Console.WriteLine("File isFileSystem false, what do?"); // TODO
+            continue;
+          }
+          else if (item.IsFolder == true)
+          {
+            try
+            {
+              Directory.Delete(item.Path, true);
+            }
+            catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+            {
+              Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+              continue;
+            }
+            catch (Exception e) when (e is IOException)
+            {
+              Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
+              continue;
+            }
+            catch (Exception e) when (e is PathTooLongException)
+            {
+              Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+              continue;
+            }
+            catch (Exception e) when (e is UnauthorizedAccessException)
+            {
+              Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+              continue;
+            }
+            catch (Exception e) when (e is DirectoryNotFoundException)
+            {
+              Console.WriteLine("Error: " + item.Path + " was not found");
+              continue;
+            }
+            catch (Exception e)
+            {
+              Console.WriteLine("Error: " + e);
+              continue;
+            }
+          }
+          else
+          {
+            try
+            {
+              File.Delete(item.Path);
+            }
+            catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+            {
+              Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+              continue;
+            }
+            catch (Exception e) when (e is IOException)
+            {
+              Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
+              continue;
+            }
+            catch (Exception e) when (e is NotSupportedException or PathTooLongException)
+            {
+              Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+              continue;
+            }
+            catch (Exception e) when (e is UnauthorizedAccessException)
+            {
+              Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+              continue;
+            }
+            catch (Exception e)
+            {
+              Console.WriteLine("Error: " + e);
+              continue;
+            }
+          }
         }
-      }
-      else
-      {
-        Console.WriteLine("Multiple matches detected, refine search");
-      }
     }
     else
     {
@@ -318,18 +384,85 @@ public class RecycleBin
     IEnumerable<FolderItem> query = from item in collection
       where item.Name.Contains(file)
       select item;
-    if (query.Count() == 1)
-    {
-      Console.WriteLine("Purging...");
-      foreach (FolderItem item in query)
-      {
-        File.Delete(item.Path);
-      }
-    }
-    else
-    {
-      Console.WriteLine("Multiple matches detected, refine search");
-    }
+
+    Console.WriteLine("Purging...");
+        foreach (FolderItem item in query)
+        {
+          if (item.IsFileSystem == false)
+          {
+            Console.WriteLine("File isFileSystem false, what do?"); // TODO
+            continue;
+          }
+          else if (item.IsFolder == true)
+          {
+            try
+            {
+              Directory.Delete(item.Path, true);
+            }
+            catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+            {
+              Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+              continue;
+            }
+            catch (Exception e) when (e is IOException)
+            {
+              Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
+              continue;
+            }
+            catch (Exception e) when (e is PathTooLongException)
+            {
+              Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+              continue;
+            }
+            catch (Exception e) when (e is UnauthorizedAccessException)
+            {
+              Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+              continue;
+            }
+            catch (Exception e) when (e is DirectoryNotFoundException)
+            {
+              Console.WriteLine("Error: " + item.Path + " was not found");
+              continue;
+            }
+            catch (Exception e)
+            {
+              Console.WriteLine("Error: " + e);
+              continue;
+            }
+          }
+          else
+          {
+            try
+            {
+              File.Delete(item.Path);
+            }
+            catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+            {
+              Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+              continue;
+            }
+            catch (Exception e) when (e is IOException)
+            {
+              Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
+              continue;
+            }
+            catch (Exception e) when (e is NotSupportedException or PathTooLongException)
+            {
+              Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+              continue;
+            }
+            catch (Exception e) when (e is UnauthorizedAccessException)
+            {
+              Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+              continue;
+            }
+            catch (Exception e)
+            {
+              Console.WriteLine("Error: " + e);
+              continue;
+            }
+          }
+        }
   }
 
 
