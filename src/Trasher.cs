@@ -1,5 +1,9 @@
 ﻿using System.CommandLine;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
+
 
 namespace Trasher
 {
@@ -16,6 +20,7 @@ namespace Trasher
       Command testCommand = new Command(name: "test", description: "For testing purposes");
 
       Argument<FileSystemInfo> fileArg = new Argument<FileSystemInfo>(name: "file", description: "Target file");
+      Argument<string> testArg = new Argument<string>(name: "test", description: "testArg");
       Argument<string> searchArg = new Argument<string>(name: "file", description: "File name to search for");
 
       rootCommand.AddCommand(deleteCommand);
@@ -35,8 +40,8 @@ namespace Trasher
       emptyCommand.SetHandler(EmptyHandler);
       purgeCommand.SetHandler(PurgeHandler, searchArg);
 
-      testCommand.AddArgument(searchArg);
-      testCommand.SetHandler(TestHandler, searchArg);
+      testCommand.AddArgument(testArg);
+      testCommand.SetHandler(TestHandler, testArg);
 
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -45,8 +50,10 @@ namespace Trasher
 
     static void DeleteHandler(FileSystemInfo file)
     {
-      if (!file.Exists) return;
-      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
+      if (file.Exists)
+      {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
+      }
     }
 
     static void RestoreHandler(string file)
@@ -80,12 +87,29 @@ namespace Trasher
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
     }
 
-    static void TestHandler(string file)
+    static void TestHandler(string inputPath)
     {
+      string processedPath = HelperFunctions.ProcessInputPathString(inputPath);
+
+      Matcher matcher;
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
       {
-        RecycleBin.PurgeFromRecycleBin(file);
+        matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
       }
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+      {
+        matcher = new Matcher(StringComparison.Ordinal);
+      }
+
+      Console.WriteLine(processedPath);
+
+      if (processedPath.Contains('*'))
+      {
+
+      }
+
+
+
 
     }
 

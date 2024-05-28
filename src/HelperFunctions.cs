@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Numerics;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Trasher;
 
@@ -126,13 +127,13 @@ public class HelperFunctions
       builder.Clear();
       foreach (PropertyInfo property in (typeof(FileDetails).GetProperties()))
       {
-        if (columnData.Keys.Contains(property.Name.ToString()))
+        if (columnData.Keys.Contains(property.Name))
         {
           builder.Append('|');
           builder.Append(' ');
           builder.Append(property.GetValue(item));
 
-          bool result = columnData.TryGetValue(property.Name.ToString(), out int keyValue);
+          bool result = columnData.TryGetValue(property.Name, out int keyValue);
 
           if (result)
           {
@@ -156,4 +157,63 @@ public class HelperFunctions
     builder.Append('+');
     Console.WriteLine(builder.ToString());
   }
+
+  public static string[] ExpandPath(string inputPath)
+  {
+    return new string[5];
+  }
+
+  public static string ProcessInputPathString(string inputPath)
+  {
+    Regex leadingDotMatch = new Regex(@"^\.[\\/]"); // starts with ./ or .\
+    Regex leadingDoubleDotMatch = new Regex(@"^\.{2}[\\/]"); // starts with ../ or ..\
+    Regex leadingTildeMatch = new Regex(@"^~[\\/]"); // starts with ~/ or ~\
+    Regex dotMatch = new Regex(@"/\./");
+    Regex doubleDotMatch = new Regex(@"/\.{2}/");
+    Regex tildeMatch = new Regex(@"/~/");
+
+
+    if (!inputPath.Contains('/') && !inputPath.Contains('\\'))
+    {
+      inputPath = Directory.GetCurrentDirectory() + "/" + inputPath;
+    }
+    if (leadingDoubleDotMatch.IsMatch(inputPath))
+    {
+      inputPath = leadingDoubleDotMatch.Replace(inputPath, new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.FullName + "/", 1);
+    }
+    else if (leadingDotMatch.IsMatch(inputPath))
+    {
+      inputPath = leadingDotMatch.Replace(inputPath, Directory.GetCurrentDirectory() + "/", 1);
+    }
+
+    if (leadingTildeMatch.IsMatch(inputPath))
+    {
+      inputPath = leadingTildeMatch.Replace(inputPath,  Environment.GetEnvironmentVariable("HOMEDRIVE") + Environment.GetEnvironmentVariable("HOMEPATH") + "/", 1);
+    }
+
+    if (tildeMatch.IsMatch(inputPath)) // if for some reason /~/ is still in the path, replace with /
+    {
+      inputPath = tildeMatch.Replace(inputPath, "/");
+    }
+
+    if (dotMatch.IsMatch(inputPath)) // if /./ is in path, just replace with /
+    {
+      inputPath = dotMatch.Replace(inputPath, "/");
+    }
+
+    if (doubleDotMatch.IsMatch(inputPath))
+    {
+      // this one actually needs some thinking about
+      // maybe split, then get parent of element 0, then append element 1?
+    }
+
+
+
+    inputPath = inputPath.Replace('\\', '/');
+
+
+
+    return inputPath;
+  }
+
 }
