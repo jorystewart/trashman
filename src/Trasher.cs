@@ -18,7 +18,6 @@ namespace Trasher
       Argument<FileSystemInfo> fileArg = new Argument<FileSystemInfo>(name: "file", description: "Target file");
       Argument<string> searchArg = new Argument<string>(name: "file", description: "File name to search for");
 
-
       rootCommand.AddCommand(deleteCommand);
       rootCommand.AddCommand(restoreCommand);
       rootCommand.AddCommand(listCommand);
@@ -41,16 +40,13 @@ namespace Trasher
 
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-
       return await rootCommand.InvokeAsync(args);
     }
 
     static void DeleteHandler(FileSystemInfo file)
     {
-      if (file.Exists)
-      {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
-      }
+      if (!file.Exists) return;
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
     }
 
     static void RestoreHandler(string file)
@@ -92,8 +88,6 @@ namespace Trasher
       }
 
     }
-
-
 
   }
 }

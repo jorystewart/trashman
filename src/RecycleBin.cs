@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
-using Microsoft.VisualBasic.FileIO;
 using System.Security;
+using Microsoft.VisualBasic.FileIO;
 using Shell32;
 
 namespace Trasher;
@@ -177,10 +177,8 @@ public class RecycleBin
       Console.WriteLine("Error querying Recycle Bin contents. HRESULT: " + queryHResult);
       throw new Exception("Error querying Recycle Bin contents. HRESULT: " + queryHResult);
     }
-    else
-    {
-      return new Tuple<long, long>(recycleBinQueryInfo.i64NumItems, recycleBinQueryInfo.i64Size);
-    }
+
+    return new Tuple<long, long>(recycleBinQueryInfo.i64NumItems, recycleBinQueryInfo.i64Size);
   }
 
 
@@ -294,7 +292,8 @@ public class RecycleBin
             Console.WriteLine("File isFileSystem false, what do?"); // TODO
             continue;
           }
-          else if (item.IsFolder == true)
+
+          if (item.IsFolder)
           {
             try
             {
@@ -303,32 +302,26 @@ public class RecycleBin
             catch (Exception e) when (e is ArgumentNullException or ArgumentException)
             {
               Console.WriteLine("Error: path is null or empty, or includes invalid characters");
-              continue;
             }
             catch (Exception e) when (e is IOException)
             {
               Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
-              continue;
             }
             catch (Exception e) when (e is PathTooLongException)
             {
               Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-              continue;
             }
             catch (Exception e) when (e is UnauthorizedAccessException)
             {
               Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-              continue;
             }
             catch (Exception e) when (e is DirectoryNotFoundException)
             {
               Console.WriteLine("Error: " + item.Path + " was not found");
-              continue;
             }
             catch (Exception e)
             {
               Console.WriteLine("Error: " + e);
-              continue;
             }
           }
           else
@@ -340,27 +333,22 @@ public class RecycleBin
             catch (Exception e) when (e is ArgumentNullException or ArgumentException)
             {
               Console.WriteLine("Error: path is null or empty, or includes invalid characters");
-              continue;
             }
             catch (Exception e) when (e is IOException)
             {
               Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
-              continue;
             }
             catch (Exception e) when (e is NotSupportedException or PathTooLongException)
             {
               Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-              continue;
             }
             catch (Exception e) when (e is UnauthorizedAccessException)
             {
               Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-              continue;
             }
             catch (Exception e)
             {
               Console.WriteLine("Error: " + e);
-              continue;
             }
           }
         }
@@ -386,84 +374,72 @@ public class RecycleBin
       select item;
 
     Console.WriteLine("Purging...");
-        foreach (FolderItem item in query)
+    foreach (FolderItem item in query)
+    {
+      if (item.IsFileSystem == false)
+      {
+        Console.WriteLine("File isFileSystem false, what do?"); // TODO
+        continue;
+      }
+
+      if (item.IsFolder)
+      {
+        try
         {
-          if (item.IsFileSystem == false)
-          {
-            Console.WriteLine("File isFileSystem false, what do?"); // TODO
-            continue;
-          }
-          else if (item.IsFolder == true)
-          {
-            try
-            {
-              Directory.Delete(item.Path, true);
-            }
-            catch (Exception e) when (e is ArgumentNullException or ArgumentException)
-            {
-              Console.WriteLine("Error: path is null or empty, or includes invalid characters");
-              continue;
-            }
-            catch (Exception e) when (e is IOException)
-            {
-              Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
-              continue;
-            }
-            catch (Exception e) when (e is PathTooLongException)
-            {
-              Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-              continue;
-            }
-            catch (Exception e) when (e is UnauthorizedAccessException)
-            {
-              Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-              continue;
-            }
-            catch (Exception e) when (e is DirectoryNotFoundException)
-            {
-              Console.WriteLine("Error: " + item.Path + " was not found");
-              continue;
-            }
-            catch (Exception e)
-            {
-              Console.WriteLine("Error: " + e);
-              continue;
-            }
-          }
-          else
-          {
-            try
-            {
-              File.Delete(item.Path);
-            }
-            catch (Exception e) when (e is ArgumentNullException or ArgumentException)
-            {
-              Console.WriteLine("Error: path is null or empty, or includes invalid characters");
-              continue;
-            }
-            catch (Exception e) when (e is IOException)
-            {
-              Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
-              continue;
-            }
-            catch (Exception e) when (e is NotSupportedException or PathTooLongException)
-            {
-              Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-              continue;
-            }
-            catch (Exception e) when (e is UnauthorizedAccessException)
-            {
-              Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-              continue;
-            }
-            catch (Exception e)
-            {
-              Console.WriteLine("Error: " + e);
-              continue;
-            }
-          }
+          Directory.Delete(item.Path, true);
         }
+        catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+        {
+          Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+        }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
+        }
+        catch (Exception e) when (e is PathTooLongException)
+        {
+          Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException)
+        {
+          Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+        }
+        catch (Exception e) when (e is DirectoryNotFoundException)
+        {
+          Console.WriteLine("Error: " + item.Path + " was not found");
+        }
+        catch (Exception e)
+        {
+          Console.WriteLine("Error: " + e);
+        }
+      }
+      else
+      {
+        try
+        {
+          File.Delete(item.Path);
+        }
+        catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+        {
+          Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+        }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
+        }
+        catch (Exception e) when (e is NotSupportedException or PathTooLongException)
+        {
+          Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException)
+        {
+          Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+        }
+        catch (Exception e)
+        {
+          Console.WriteLine("Error: " + e);
+        }
+      }
+    }
   }
-
-
 }
