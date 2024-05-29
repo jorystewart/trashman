@@ -1,5 +1,6 @@
 ﻿Todo:
 
+Clean up globbing implementation<br />
+Hook delete, purge, and restore handlers into globbing method<br />
 Tab completion for trasher restore and trasher purge<br />
-Figure out how to implement wildcards (middleware -> expand expresion? Change input to string?)
 Trash.cs for Linux implementation<br />
