@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.FileSystemGlobbing;
@@ -100,13 +101,63 @@ namespace Trasher
       {
         matcher = new Matcher(StringComparison.Ordinal);
       }
-
-      Console.WriteLine(processedPath);
-
-      if (processedPath.Contains('*'))
+      else
       {
-
+        Console.WriteLine("Unsupported platform. Only Windows and Linux are supported");
+        return;
       }
+
+      // Restrict usage of arbitrary directory depth token (**)
+      Regex unsupportedDoubleStar = new Regex(@"([^/]\*{2})|(\*{2}[^/])");
+
+      if (unsupportedDoubleStar.IsMatch(processedPath))
+      {
+        Console.WriteLine("Invalid use of arbitrary directory depth token ('**')");
+        return;
+      }
+
+      if (processedPath.Split("/**/").Length > 2)
+      {
+        Console.WriteLine("Only one instance of the arbitrary directory depth token ('**') is allowed in a path");
+        return;
+      }
+
+      if (processedPath.Contains("/**/"))
+      {
+        string parentPathString = processedPath.Split("/**/")[0];
+        matcher.AddInclude("/**/" + processedPath.Split("/**/")[1]);
+        PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(parentPathString)));
+        if (result.HasMatches)
+        {
+          foreach (FilePatternMatch match in result.Files)
+          {
+            Console.WriteLine(parentPathString + Path.AltDirectorySeparatorChar + match.Path);
+          }
+          return;
+        }
+      }
+
+      Regex containsSingleStar = new Regex(@"[^/\*]*\*[^/\*]*");
+
+      if (containsSingleStar.IsMatch(processedPath))
+      {
+        int starIndex = processedPath.IndexOf('*');
+        string parentPathString = processedPath.Substring(0, starIndex).TrimEnd('/');
+        string pattern = processedPath.Substring(starIndex).TrimStart('/');
+        matcher.AddInclude(pattern);
+        PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(parentPathString)));
+        if (result.HasMatches)
+        {
+          foreach (FilePatternMatch match in result.Files)
+          {
+            Console.WriteLine(parentPathString + Path.AltDirectorySeparatorChar + match.Path);
+          }
+        }
+      }
+
+
+
+
 
 
 
