@@ -51,9 +51,12 @@ namespace Trasher
 
     static void DeleteHandler(FileSystemInfo file)
     {
-      if (file.Exists)
+      if (!file.Exists) return;
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
+
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
       {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
+
       }
     }
 
