@@ -1,7 +1,10 @@
 ﻿using System.Text;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 namespace Trasher;
 
@@ -158,11 +161,6 @@ public class HelperFunctions
     Console.WriteLine(builder.ToString());
   }
 
-  public static string[] ExpandPath(string inputPath)
-  {
-    return new string[5];
-  }
-
   public static string ProcessInputPathString(string inputPath)
   {
     Regex leadingDotMatch = new Regex(@"^\.[\\/]"); // starts with ./ or .\
@@ -211,5 +209,75 @@ public class HelperFunctions
 
     return inputPath;
   }
+
+  public static List<string> PerformGlobSearch(string file)
+  {
+    List<string> filePaths = new List<string>();
+
+    // Restrict usage of arbitrary directory depth token (**)
+    Regex unsupportedDoubleStar = new Regex(@"([^/]\*{2})|(\*{2}[^/])");
+    if (unsupportedDoubleStar.IsMatch(file))
+    {
+      Console.WriteLine("Invalid use of arbitrary directory depth token ('**')");
+      return filePaths;
+    }
+
+    if (file.Split("/**/").Length > 2)
+    {
+      Console.WriteLine("Only one instance of the arbitrary directory depth token ('**') is allowed in a path");
+      return filePaths;
+    }
+
+    Matcher matcher;
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    {
+      matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+    }
+    else
+    {
+      // Should only hit this on Linux, but it's a reasonable fallback if the OS check fails somehow
+      matcher = new Matcher(StringComparison.Ordinal);
+    }
+
+    Regex containsSingleStar = new Regex(@"[^/\*]*\*[^/\*]*");
+
+    if (file.Contains("/**/"))
+    {
+      string parentPathString = file.Split("/**/")[0];
+      matcher.AddInclude("/**/" + file.Split("/**/")[1]);
+      PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(parentPathString)));
+      foreach (FilePatternMatch match in result.Files)
+      {
+        filePaths.Add(parentPathString + '/' + match.Path);
+      }
+
+      return filePaths;
+    }
+
+    if (containsSingleStar.IsMatch(file))
+    {
+      int starIndex = file.IndexOf('*');
+      string splitString = file.Substring(0, starIndex).TrimEnd('/');
+      int parentEndIndex = splitString.LastIndexOf('/');
+      string parentPathString = splitString.Substring(0, parentEndIndex).TrimEnd('/');
+      string pattern = file.Substring(parentEndIndex).TrimStart('/');
+      matcher.AddInclude("*" + pattern);
+      PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(parentPathString)));
+      foreach (FilePatternMatch match in result.Files)
+      {
+        filePaths.Add(parentPathString + '/' + match.Path);
+      }
+
+      return filePaths;
+    }
+    else
+    {
+      filePaths.Add(file);
+      return filePaths;
+    }
+
+  }
+
+
 
 }

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Security;
+using System.Text.RegularExpressions;
 using Microsoft.VisualBasic.FileIO;
 #if WINDOWS
 using Shell32;
@@ -106,27 +107,22 @@ public partial class RecycleBin
       Shell shell = new Shell();
       Folder recycleBinFolder = shell.NameSpace(10);
       FolderItems recycleBinItems = recycleBinFolder.Items();
-      IEnumerable<FolderItem> collection = recycleBinItems.Cast<FolderItem>();
-      IEnumerable<FolderItem> query = from item in collection
-        where item.Name.Contains(file)
+      string pattern = file.Replace("*", ".*");
+      Regex starReplace = new Regex($"^{pattern}$");
+      IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
+        where starReplace.IsMatch(item.Name)
         select item;
-      if (query.Count() == 1)
+      Console.WriteLine("# results: " + searchResult.Count());
+      foreach (FolderItem item in searchResult)
       {
-        Console.WriteLine("Restoring...");
-        foreach (FolderItem item in query)
+        foreach (FolderItemVerb verb in item.Verbs())
         {
-          foreach (FolderItemVerb verb in item.Verbs())
+          if (verb.Name.Contains("Restore"))
           {
-            if (verb.Name.Contains("Restore"))
-            {
-              verb.DoIt();
-            }
+            verb.DoIt();
+            Console.WriteLine("Restored " + item.Name);
           }
         }
-      }
-      else
-      {
-        Console.WriteLine("Multiple matches detected, refine search");
       }
     }
     else
@@ -146,32 +142,23 @@ public partial class RecycleBin
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
-    IEnumerable<FolderItem> collection = recycleBinItems.Cast<FolderItem>();
-    IEnumerable<FolderItem> query = from item in collection
-      where item.Name.Contains(file)
+    string pattern = file.Replace("*", ".*");
+    Regex starReplace = new Regex($"^{pattern}$");
+    IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
+      where starReplace.IsMatch(item.Name)
       select item;
-    if (query.Count() == 1)
+    foreach (FolderItem item in searchResult)
     {
-      Console.WriteLine("Restoring...");
-      foreach (FolderItem item in query)
+      foreach (FolderItemVerb verb in item.Verbs())
       {
-        foreach (FolderItemVerb verb in item.Verbs())
+        if (verb.Name.Contains("Restore") || (verb.Name.Contains("R&estore")))
         {
-          if (verb.Name.Contains("Restore") || (verb.Name.Contains("R&estore")))
-          {
-            verb.DoIt();
-          }
+          verb.DoIt();
         }
       }
     }
-    else
-    {
-      Console.WriteLine("Multiple matches detected, refine search");
-    }
     #endif
   }
-
-
 
   public static Tuple<long,long> GetRecycleBinContentInfo()
   {
@@ -186,7 +173,6 @@ public partial class RecycleBin
 
     return new Tuple<long, long>(recycleBinQueryInfo.i64NumItems, recycleBinQueryInfo.i64Size);
   }
-
 
   public static List<FileDetails> GetRecycleBinItems()
   {
@@ -230,7 +216,6 @@ public partial class RecycleBin
     #endif
   }
 
-
   private static List<FileDetails> GetRecycleBinItemsSTA()
   {
     #if WINDOWS
@@ -256,7 +241,6 @@ public partial class RecycleBin
     return new List<FileDetails>();
     #endif
   }
-
 
   public static void EmptyRecycleBinContents()
   {
@@ -286,7 +270,6 @@ public partial class RecycleBin
       }
     }
   }
-
 
   public static void PurgeFromRecycleBin(string file)
   {

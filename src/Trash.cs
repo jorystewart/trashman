@@ -9,54 +9,56 @@ public class Trash
 {
   private static string _trashLocation = (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) || Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null) ? Environment.GetEnvironmentVariable("XFG_DATA_HOME") + "/Trash" : Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash";
 
-  public static void SendToTrash(string file)
+  public static void SendToTrash(FileSystemInfo file)
   {
-    file = HelperFunctions.ProcessInputPathString(file);
-    FileInfo fileHandle = new FileInfo(file);
-    if ((fileHandle.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+    string trashFileName;
+    FileStream fileStream;
+    StreamWriter writer;
+    switch (file)
     {
-      string trashFileName = fileHandle.Name;
-      if (Directory.Exists(_trashLocation + "/files/" + trashFileName))
-      {
-        int counter = 0;
-        while (Directory.Exists(_trashLocation + "/files/" + trashFileName))
+      case FileInfo fileInfo:
+        trashFileName = fileInfo.Name;
+        if (File.Exists(_trashLocation + "/files/" + trashFileName))
         {
-          trashFileName = trashFileName + counter.ToString();
+          int counter = 0;
+          while (Directory.Exists(_trashLocation + "/files/" + trashFileName))
+          {
+            trashFileName = trashFileName + counter.ToString();
+          }
+
+          fileStream = File.Create(_trashLocation + "/info/" + trashFileName + ".trashinfo");
+          writer = new StreamWriter(fileStream);
+          writer.AutoFlush = true;
+          writer.Write("[Trash Info");
+          writer.Write("Path=" + fileInfo.FullName);
+          writer.Write("DeletionDate=" + DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
+
+          writer.Close();
+          fileStream.Close();
+          File.Move(fileInfo.FullName, _trashLocation + "/files/");
         }
-      }
+        break;
 
-      FileStream fileStream = File.Create(_trashLocation + "/info/" + trashFileName + ".trashinfo");
-      StreamWriter writer = new StreamWriter(fileStream);
-      writer.Write("[Trash Info");
-      writer.Write("Path=" + fileHandle.FullName);
-      writer.Write("DeletionDate=" + DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
-      writer.Close();
-      fileStream.Close();
-
-      Directory.Move(fileHandle.FullName, _trashLocation + "/files");
-    }
-    else
-    {
-      string trashFileName = fileHandle.Name;
-      if (File.Exists(_trashLocation + "/files/" + trashFileName))
-      {
-        int counter = 0;
-        while (Directory.Exists(_trashLocation + "/files/" + trashFileName))
+      case DirectoryInfo directoryInfo:
+        trashFileName = directoryInfo.Name;
+        if (Directory.Exists(_trashLocation + "/files/" + trashFileName))
         {
-          trashFileName = trashFileName + counter.ToString();
+          int counter = 0;
+          while (Directory.Exists(_trashLocation + "/files/" + trashFileName))
+          {
+            trashFileName = trashFileName + counter.ToString();
+          }
         }
 
-        FileStream fileStream = File.Create(_trashLocation + "/info/" + trashFileName + ".trashinfo");
-        StreamWriter writer = new StreamWriter(fileStream);
-        writer.AutoFlush = true;
+        fileStream = File.Create(_trashLocation + "/info/" + trashFileName + ".trashinfo");
+        writer = new StreamWriter(fileStream);
         writer.Write("[Trash Info");
-        writer.Write("Path=" + fileHandle.FullName);
+        writer.Write("Path=" + directoryInfo.FullName);
         writer.Write("DeletionDate=" + DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
-
         writer.Close();
         fileStream.Close();
-        File.Move(fileHandle.FullName, _trashLocation + "/files/");
-      }
+        Directory.Move(directoryInfo.FullName, _trashLocation + "/files");
+        break;
     }
   }
 

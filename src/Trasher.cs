@@ -19,7 +19,7 @@ namespace Trasher
       Command purgeCommand = new Command(name: "purge", description: "Permanently delete a file from trash");
       Command testCommand = new Command(name: "test", description: "For testing purposes");
 
-      Argument<FileSystemInfo> fileArg = new Argument<FileSystemInfo>(name: "file", description: "Target file");
+      Argument<string> fileArg = new Argument<string>(name: "file", description: "Target file");
       Argument<string> testArg = new Argument<string>(name: "test", description: "testArg");
       Argument<string> searchArg = new Argument<string>(name: "file", description: "File name to search for");
 
@@ -48,15 +48,29 @@ namespace Trasher
       return await rootCommand.InvokeAsync(args);
     }
 
-    static void DeleteHandler(FileSystemInfo file)
+    static void DeleteHandler(string file)
     {
-      if (!file.Exists) return;
-      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
-      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.SendToTrash(file.FullName); }
+      string processedPath = HelperFunctions.ProcessInputPathString(file);
+      List<string> searchResults = HelperFunctions.PerformGlobSearch(processedPath);
+      foreach (string result in searchResults)
+      {
+        if (File.Exists(result))
+        {
+          if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(new FileInfo(result)); }
+          else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.SendToTrash(new FileInfo(result)); }
+        }
+        else if (Directory.Exists(result))
+        {
+          if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(new DirectoryInfo(result)); }
+          else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.SendToTrash(new DirectoryInfo(result)); }
+        }
+      }
     }
 
     static void RestoreHandler(string file)
     {
+      if (file.Contains("**") || file.Contains('/')) { return; }
+
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.RestoreFromRecycleBin(file); }
     }
 
@@ -102,69 +116,14 @@ namespace Trasher
     static void TestHandler(string inputPath)
     {
       string processedPath = HelperFunctions.ProcessInputPathString(inputPath);
+      List<string> searchResults = HelperFunctions.PerformGlobSearch(processedPath);
 
-      Matcher matcher;
-      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+      foreach (string result in searchResults)
       {
-        matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
-      }
-      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-      {
-        matcher = new Matcher(StringComparison.Ordinal);
-      }
-      else
-      {
-        Console.WriteLine("Unsupported platform. Only Windows and Linux are supported");
-        return;
+        Console.WriteLine(result);
       }
 
-      // Restrict usage of arbitrary directory depth token (**)
-      Regex unsupportedDoubleStar = new Regex(@"([^/]\*{2})|(\*{2}[^/])");
 
-      if (unsupportedDoubleStar.IsMatch(processedPath))
-      {
-        Console.WriteLine("Invalid use of arbitrary directory depth token ('**')");
-        return;
-      }
-
-      if (processedPath.Split("/**/").Length > 2)
-      {
-        Console.WriteLine("Only one instance of the arbitrary directory depth token ('**') is allowed in a path");
-        return;
-      }
-
-      if (processedPath.Contains("/**/"))
-      {
-        string parentPathString = processedPath.Split("/**/")[0];
-        matcher.AddInclude("/**/" + processedPath.Split("/**/")[1]);
-        PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(parentPathString)));
-        if (result.HasMatches)
-        {
-          foreach (FilePatternMatch match in result.Files)
-          {
-            Console.WriteLine(parentPathString + Path.AltDirectorySeparatorChar + match.Path);
-          }
-          return;
-        }
-      }
-
-      Regex containsSingleStar = new Regex(@"[^/\*]*\*[^/\*]*");
-
-      if (containsSingleStar.IsMatch(processedPath))
-      {
-        int starIndex = processedPath.IndexOf('*');
-        string parentPathString = processedPath.Substring(0, starIndex).TrimEnd('/');
-        string pattern = processedPath.Substring(starIndex).TrimStart('/');
-        matcher.AddInclude(pattern);
-        PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(parentPathString)));
-        if (result.HasMatches)
-        {
-          foreach (FilePatternMatch match in result.Files)
-          {
-            Console.WriteLine(parentPathString + Path.AltDirectorySeparatorChar + match.Path);
-          }
-        }
-      }
 
 
 
