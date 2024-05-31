@@ -1,5 +1,4 @@
 ﻿using System.CommandLine;
-using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.FileSystemGlobbing;
@@ -53,11 +52,7 @@ namespace Trasher
     {
       if (!file.Exists) return;
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(file); }
-
-      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-      {
-
-      }
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.SendToTrash(file.FullName); }
     }
 
     static void RestoreHandler(string file)
@@ -79,11 +74,24 @@ namespace Trasher
           Console.WriteLine("Trash is empty.");
         }
       }
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+      {
+        List<FileDetails> itemsList = Trash.GetTrashContents();
+        if (itemsList.Count > 0)
+        {
+          HelperFunctions.WriteConsoleTable(itemsList);
+        }
+        else
+        {
+          Console.WriteLine("Trash is empty.");
+        }
+      }
     }
 
     static void EmptyHandler()
     {
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.EmptyRecycleBinContents(); }
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.EmptyTrashContents();}
     }
 
     static void PurgeHandler(string file)

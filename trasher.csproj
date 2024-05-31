@@ -5,8 +5,15 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Release x64;Debug x64</Configurations>
+        <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+        <DefineConstants>WINDOWS</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+        <DefineConstants>LINUX</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,11 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="shell32.dll" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <COMReference Include="Shell32">
+      <COMReference Include="Shell32" Condition="'$(OS)' == 'Windows_NT'">
         <VersionMinor>0</VersionMinor>
         <VersionMajor>1</VersionMajor>
         <Guid>50a7e9b0-70ef-11d1-b75a-00a0c90564fe</Guid>

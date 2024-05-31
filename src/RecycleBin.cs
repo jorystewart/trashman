@@ -1,11 +1,13 @@
 ﻿using System.Runtime.InteropServices;
 using System.Security;
 using Microsoft.VisualBasic.FileIO;
+#if WINDOWS
 using Shell32;
+#endif
 
 namespace Trasher;
 
-public class RecycleBin
+public partial class RecycleBin
 {
   #region Enums
 
@@ -34,11 +36,11 @@ public class RecycleBin
 
   #region Shell32.dll Methods
 
-  [DllImport("shell32.dll")]
-  static extern int SHQueryRecycleBinW(string pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
+  [LibraryImport("shell32.dll",StringMarshalling = StringMarshalling.Utf16)]
+  private static partial int SHQueryRecycleBinW(string pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
 
-  [DllImport("shell32.dll")]
-  static extern int SHEmptyRecycleBinW(IntPtr hwnd, string pszRootPath, uint dwFlags);
+  [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
+  private static partial int SHEmptyRecycleBinW(IntPtr hwnd, string pszRootPath, uint dwFlags);
 
   #endregion
 
@@ -98,6 +100,7 @@ public class RecycleBin
 
   public static void RestoreFromRecycleBin(string file)
   {
+    #if WINDOWS
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
       Shell shell = new Shell();
@@ -134,10 +137,12 @@ public class RecycleBin
       staThread.Start();
       staThread.Join();
     }
+    #endif
   }
 
   private static void RestoreFromRecycleBinSTA(string file)
   {
+    #if WINDOWS
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
@@ -163,6 +168,7 @@ public class RecycleBin
     {
       Console.WriteLine("Multiple matches detected, refine search");
     }
+    #endif
   }
 
 
@@ -184,6 +190,7 @@ public class RecycleBin
 
   public static List<FileDetails> GetRecycleBinItems()
   {
+    #if WINDOWS
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
       List<FileDetails> recycleBinItems = new List<FileDetails>();
@@ -217,11 +224,16 @@ public class RecycleBin
       staThread.Join();
       return recycleBinItems;
     }
+    #endif
+    #if LINUX
+    return new List<FileDetails>();
+    #endif
   }
 
 
   private static List<FileDetails> GetRecycleBinItemsSTA()
   {
+    #if WINDOWS
     List<FileDetails> recycleBinItems = new List<FileDetails>();
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
@@ -239,6 +251,10 @@ public class RecycleBin
     }
 
     return recycleBinItems;
+    #endif
+    #if LINUX
+    return new List<FileDetails>();
+    #endif
   }
 
 
@@ -274,6 +290,7 @@ public class RecycleBin
 
   public static void PurgeFromRecycleBin(string file)
   {
+    #if WINDOWS
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
       Shell shell = new Shell();
@@ -361,10 +378,12 @@ public class RecycleBin
       staThread.Start();
       staThread.Join();
     }
+    #endif
   }
 
   private static void PurgeFromRecycleBinSTA(string file)
   {
+    #if WINDOWS
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
@@ -441,5 +460,6 @@ public class RecycleBin
         }
       }
     }
+    #endif
   }
 }
