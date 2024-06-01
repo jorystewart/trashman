@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using Microsoft.VisualBasic.FileIO;
 using Shell32;
 
-namespace Trasher;
+namespace Trashman;
 
 public partial class RecycleBin
 {

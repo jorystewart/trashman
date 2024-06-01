@@ -1,4 +1,4 @@
-﻿namespace Trasher;
+﻿namespace Trashman;
 
 public class FileDetails
 {

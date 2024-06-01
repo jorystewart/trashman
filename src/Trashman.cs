@@ -2,9 +2,9 @@
 using System.Runtime.InteropServices;
 
 
-namespace Trasher
+namespace Trashman
 {
-  public static class Trasher
+  public static class Trashman
   {
     static async Task<int> Main(string[] args)
     {

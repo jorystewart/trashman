@@ -3,7 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using Microsoft.VisualBasic;
 
-namespace Trasher;
+namespace Trashman;
 
 public class Trash
 {
