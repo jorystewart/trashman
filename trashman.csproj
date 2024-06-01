@@ -7,6 +7,7 @@
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;Release Single-File</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
@@ -15,7 +16,7 @@
     <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
         <DefineConstants>LINUX</DefineConstants>
     </PropertyGroup>
-    
+
     <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
         <Compile Remove="Trash.cs" />
     </ItemGroup>
