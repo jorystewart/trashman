@@ -1,8 +1,5 @@
 ﻿using System.CommandLine;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 
 namespace Trasher
@@ -52,6 +49,7 @@ namespace Trasher
     {
       string processedPath = HelperFunctions.ProcessInputPathString(file);
       List<string> searchResults = HelperFunctions.PerformGlobSearch(processedPath);
+
       foreach (string result in searchResults)
       {
         if (File.Exists(result))
@@ -110,6 +108,8 @@ namespace Trasher
 
     static void PurgeHandler(string file)
     {
+      if (file.Contains("**") || file.Contains('/')) { return; }
+
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
     }
 
@@ -122,15 +122,6 @@ namespace Trasher
       {
         Console.WriteLine(result);
       }
-
-
-
-
-
-
-
-
-
 
     }
 

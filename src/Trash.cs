@@ -83,7 +83,7 @@ public class Trash
       while (!reader.EndOfStream)
       {
         readString = reader.ReadLine();
-        if (readString[0] == '[')
+        if (readString == null || readString[0] == '[')
         {
           continue;
         }
