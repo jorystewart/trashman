@@ -2,9 +2,7 @@
 using System.Security;
 using System.Text.RegularExpressions;
 using Microsoft.VisualBasic.FileIO;
-#if WINDOWS
 using Shell32;
-#endif
 
 namespace Trasher;
 
@@ -101,7 +99,6 @@ public partial class RecycleBin
 
   public static void RestoreFromRecycleBin(string file)
   {
-    #if WINDOWS
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
       Shell shell = new Shell();
@@ -142,12 +139,10 @@ public partial class RecycleBin
       staThread.Start();
       staThread.Join();
     }
-    #endif
   }
 
   private static void RestoreFromRecycleBinSTA(string file)
   {
-    #if WINDOWS
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
@@ -177,7 +172,6 @@ public partial class RecycleBin
         }
       }
     }
-    #endif
   }
 
   public static Tuple<long,long> GetRecycleBinContentInfo()
@@ -198,7 +192,6 @@ public partial class RecycleBin
 
   public static List<FileDetails> GetRecycleBinItems()
   {
-    #if WINDOWS
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
       List<FileDetails> recycleBinItems = new List<FileDetails>();
@@ -232,15 +225,10 @@ public partial class RecycleBin
       staThread.Join();
       return recycleBinItems;
     }
-    #endif
-    #if LINUX
-    return new List<FileDetails>();
-    #endif
   }
 
   private static List<FileDetails> GetRecycleBinItemsSTA()
   {
-    #if WINDOWS
     List<FileDetails> recycleBinItems = new List<FileDetails>();
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
@@ -258,10 +246,6 @@ public partial class RecycleBin
     }
 
     return recycleBinItems;
-    #endif
-    #if LINUX
-    return new List<FileDetails>();
-    #endif
   }
 
   public static void EmptyRecycleBinContents()
@@ -295,7 +279,6 @@ public partial class RecycleBin
 
   public static void PurgeFromRecycleBin(string file)
   {
-    #if WINDOWS
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
       Shell shell = new Shell();
@@ -383,12 +366,10 @@ public partial class RecycleBin
       staThread.Start();
       staThread.Join();
     }
-    #endif
   }
 
   private static void PurgeFromRecycleBinSTA(string file)
   {
-    #if WINDOWS
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
@@ -465,6 +446,5 @@ public partial class RecycleBin
         }
       }
     }
-    #endif
   }
 }

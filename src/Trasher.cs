@@ -54,13 +54,21 @@ namespace Trasher
       {
         if (File.Exists(result))
         {
+          #if WINDOWS
           if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(new FileInfo(result)); }
+          #endif
+          #if LINUX
           else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.SendToTrash(new FileInfo(result)); }
+          #endif
         }
         else if (Directory.Exists(result))
         {
+          #if WINDOWS
           if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.SendToRecycleBin(new DirectoryInfo(result)); }
+          #endif
+          #if LINUX
           else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.SendToTrash(new DirectoryInfo(result)); }
+          #endif
         }
       }
     }
@@ -69,11 +77,14 @@ namespace Trasher
     {
       if (file.Contains("**") || file.Contains('/')) { return; }
 
+      #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.RestoreFromRecycleBin(file); }
+      #endif
     }
 
     static void ListHandler()
     {
+      #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
       {
         List<FileDetails> itemsList = RecycleBin.GetRecycleBinItems();
@@ -86,7 +97,9 @@ namespace Trasher
           Console.WriteLine("Trash is empty.");
         }
       }
-      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+      #endif
+      #if LINUX
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
       {
         List<FileDetails> itemsList = Trash.GetTrashContents();
         if (itemsList.Count > 0)
@@ -98,19 +111,26 @@ namespace Trasher
           Console.WriteLine("Trash is empty.");
         }
       }
+      #endif
     }
 
     static void EmptyHandler()
     {
+      #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.EmptyRecycleBinContents(); }
+      #endif
+      #if LINUX
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.EmptyTrashContents();}
+      #endif
     }
 
     static void PurgeHandler(string file)
     {
       if (file.Contains("**") || file.Contains('/')) { return; }
 
+      #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
+      #endif
     }
 
     static void TestHandler(string inputPath)
