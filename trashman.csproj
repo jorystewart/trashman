@@ -18,10 +18,10 @@
     </PropertyGroup>
 
     <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
-        <Compile Remove="Trash.cs" />
+        <Compile Remove="src/Trash.cs" />
     </ItemGroup>
     <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
-        <Compile Remove="RecycleBin.cs" />
+        <Compile Remove="src/RecycleBin.cs" />
     </ItemGroup>
 
     <ItemGroup>

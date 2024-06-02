@@ -44,7 +44,6 @@ public partial class RecycleBin
   #endregion
 
 
-
   public static void SendToRecycleBin(FileSystemInfo file)
   {
     switch (file)
@@ -104,7 +103,7 @@ public partial class RecycleBin
       Shell shell = new Shell();
       Folder recycleBinFolder = shell.NameSpace(10);
       FolderItems recycleBinItems = recycleBinFolder.Items();
-      string pattern = file.Replace("*", ".*");
+      string pattern = file.Replace("*", ".*?");
       Regex starReplace = new Regex($"^{pattern}$");
       IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
         where starReplace.IsMatch(item.Name)
@@ -126,7 +125,7 @@ public partial class RecycleBin
           }
           else
           {
-            Console.WriteLine("Unable to locate verb Restore on " + item.Name);
+            Console.WriteLine("Unable to locate verb \"Restore\" on " + item.Name);
           }
         }
       }
@@ -146,7 +145,7 @@ public partial class RecycleBin
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
-    string pattern = file.Replace("*", ".*");
+    string pattern = file.Replace("*", ".*?");
     Regex starReplace = new Regex($"^{pattern}$");
     IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
       where starReplace.IsMatch(item.Name)
@@ -284,7 +283,7 @@ public partial class RecycleBin
       Shell shell = new Shell();
       Folder recycleBinFolder = shell.NameSpace(10);
       FolderItems recycleBinItems = recycleBinFolder.Items();
-      string pattern = file.Replace("*", ".*");
+      string pattern = file.Replace("*", ".*?");
       Regex starReplace = new Regex($"^{pattern}$");
       IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
         where starReplace.IsMatch(item.Name)
@@ -373,7 +372,7 @@ public partial class RecycleBin
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
-    string pattern = file.Replace("*", ".*");
+    string pattern = file.Replace("*", ".*?");
     Regex starReplace = new Regex($"^{pattern}$");
     IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
       where starReplace.IsMatch(item.Name)

@@ -9,8 +9,17 @@ public class Trash
 {
   private static string _trashLocation = (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) || Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null) ? Environment.GetEnvironmentVariable("XFG_DATA_HOME") + "/Trash" : Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash";
 
+  public static void TestTrashDirectories()
+  {
+    if (!Directory.Exists(_trashLocation) { Directory.CreateDirectory(_trashLocation); }
+    if (!Directory.Exists(_trashLocation + "/files")) { Directory.CreateDirectory(_trashLocation + "/files"); }
+    if (!Directory.Exists(_trashLocation + "/info")) { Directory.CreateDirectory(_trashLocation + "/info"); }
+  }
+
   public static void SendToTrash(FileSystemInfo file)
   {
+    TestTrashDirectories()
+
     string trashFileName;
     FileStream fileStream;
     StreamWriter writer;
@@ -64,6 +73,7 @@ public class Trash
 
   public static void RestoreFromTrash(string file)
   {
+    TestTrashDirectories();
     file = HelperFunctions.ProcessInputPathString(file);
 
     // TODO
@@ -71,6 +81,7 @@ public class Trash
 
   public static List<FileDetails> GetTrashContents()
   {
+    TestTrashDirectories();
     DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
     List<FileDetails> trashContents = new List<FileDetails>();
     FileInfo[] trashInfoFiles = trashInfoDir.GetFiles();
@@ -120,6 +131,7 @@ public class Trash
 
   public static void EmptyTrashContents()
   {
+    TestTrashDirectories();
     DirectoryInfo trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
     DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
     Console.WriteLine(trashFilesDir.GetFiles().Length + " items in trash.");
@@ -173,6 +185,7 @@ public class Trash
 
   public static void purgeFromTrash(string file)
   {
+    TestTrashDirectories();
     file = HelperFunctions.ProcessInputPathString(file);
 
     // TODO
