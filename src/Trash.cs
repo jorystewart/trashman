@@ -7,18 +7,18 @@ namespace Trashman;
 
 public class Trash
 {
-  private static string _trashLocation = (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) || Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null) ? Environment.GetEnvironmentVariable("XFG_DATA_HOME") + "/Trash" : Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash";
+  private static string _trashLocation = (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) || Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null) ? Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash" : Environment.GetEnvironmentVariable("XFG_DATA_HOME") + "/Trash";
 
   public static void TestTrashDirectories()
   {
-    if (!Directory.Exists(_trashLocation) { Directory.CreateDirectory(_trashLocation); }
+    if (!Directory.Exists(_trashLocation)) { Directory.CreateDirectory(_trashLocation, (UnixFileMode.UserRead | UnixFileMode.UserWrite)); }
     if (!Directory.Exists(_trashLocation + "/files")) { Directory.CreateDirectory(_trashLocation + "/files"); }
     if (!Directory.Exists(_trashLocation + "/info")) { Directory.CreateDirectory(_trashLocation + "/info"); }
   }
 
   public static void SendToTrash(FileSystemInfo file)
   {
-    TestTrashDirectories()
+    TestTrashDirectories();
 
     string trashFileName;
     FileStream fileStream;
@@ -34,18 +34,17 @@ public class Trash
           {
             trashFileName = trashFileName + counter.ToString();
           }
-
-          fileStream = File.Create(_trashLocation + "/info/" + trashFileName + ".trashinfo");
-          writer = new StreamWriter(fileStream);
-          writer.AutoFlush = true;
-          writer.Write("[Trash Info");
-          writer.Write("Path=" + fileInfo.FullName);
-          writer.Write("DeletionDate=" + DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
-
-          writer.Close();
-          fileStream.Close();
-          File.Move(fileInfo.FullName, _trashLocation + "/files/");
         }
+
+        fileStream = File.Create(_trashLocation + "/info/" + trashFileName + ".trashinfo");
+        writer = new StreamWriter(fileStream);
+        writer.AutoFlush = true;
+        writer.Write("[Trash Info]" + Environment.NewLine);
+        writer.Write("Path=" + fileInfo.FullName + Environment.NewLine);
+        writer.Write("DeletionDate=" + DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss") + Environment.NewLine);
+        writer.Close();
+        fileStream.Close();
+        File.Move(fileInfo.FullName, _trashLocation + "/files/" + fileInfo.Name);
         break;
 
       case DirectoryInfo directoryInfo:
@@ -61,12 +60,12 @@ public class Trash
 
         fileStream = File.Create(_trashLocation + "/info/" + trashFileName + ".trashinfo");
         writer = new StreamWriter(fileStream);
-        writer.Write("[Trash Info");
-        writer.Write("Path=" + directoryInfo.FullName);
-        writer.Write("DeletionDate=" + DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
+        writer.Write("[Trash Info]" + Environment.NewLine);
+        writer.Write("Path=" + directoryInfo.FullName + Environment.NewLine);
+        writer.Write("DeletionDate=" + DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss") + Environment.NewLine);
         writer.Close();
         fileStream.Close();
-        Directory.Move(directoryInfo.FullName, _trashLocation + "/files");
+        Directory.Move(directoryInfo.FullName, _trashLocation + "/files/" + directoryInfo.Name);
         break;
     }
   }
@@ -83,6 +82,7 @@ public class Trash
   {
     TestTrashDirectories();
     DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
+    DirectoryInfo trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
     List<FileDetails> trashContents = new List<FileDetails>();
     FileInfo[] trashInfoFiles = trashInfoDir.GetFiles();
     foreach (FileInfo infoFile in trashInfoFiles)
@@ -117,11 +117,28 @@ public class Trash
         }
       }
 
-      string[] originalFile = Directory.GetFiles(_trashLocation + "/files", infoFile.Name);
-      if (File.Exists(_trashLocation + "/files" + originalFile[0]))
+      FileSystemInfo[] originalFile = trashFilesDir.GetFileSystemInfos(fileDetails.Name);
+      if (File.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
-        fileDetails.Size = HelperFunctions.ConvertBytes((new FileInfo(_trashLocation + "/files/" + originalFile[0])).Length);
+        fileDetails.Size = HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
       }
+      else if (Directory.Exists(trashFilesDir + "/" + fileDetails.Name))
+      {
+        FileSystemInfo[] contents = new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name).GetFileSystemInfos("*", SearchOption.AllDirectories);
+        long totalSize = 0;
+        foreach (FileSystemInfo item in contents)
+        {
+          switch (item)
+          {
+            case FileInfo fileInfo:
+              totalSize = totalSize + fileInfo.Length;
+              break;
+          }
+        }
+
+        fileDetails.Size = HelperFunctions.ConvertBytes(totalSize);
+      }
+
       trashContents.Add(fileDetails);
 
     }
