@@ -1,9 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
-using Microsoft.VisualBasic;
-
-namespace Trashman;
+﻿namespace Trashman;
 
 public class Trash
 {
@@ -122,7 +117,6 @@ public class Trash
         }
       }
 
-      FileSystemInfo[] originalFile = trashFilesDir.GetFileSystemInfos(fileDetails.Name);
       if (File.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
         fileDetails.Size = HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
@@ -210,6 +204,7 @@ public class Trash
   {
     TestTrashDirectories();
     file = HelperFunctions.ProcessInputPathString(file);
+
 
     // TODO
   }
