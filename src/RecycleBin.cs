@@ -283,8 +283,8 @@ public partial class RecycleBin
       Shell shell = new Shell();
       Folder recycleBinFolder = shell.NameSpace(10);
       FolderItems recycleBinItems = recycleBinFolder.Items();
-      string pattern = file.Replace("*", ".*?");
-      Regex starReplace = new Regex($"^{pattern}$");
+      string pattern = file.Replace("*", ".*");
+      Regex starReplace = new Regex($"^(?i){pattern}$");
       IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
         where starReplace.IsMatch(item.Name)
         select item;
@@ -372,8 +372,8 @@ public partial class RecycleBin
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
-    string pattern = file.Replace("*", ".*?");
-    Regex starReplace = new Regex($"^{pattern}$");
+    string pattern = file.Replace("*", ".*");
+    Regex starReplace = new Regex($"^(?i){pattern}$");
     IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
       where starReplace.IsMatch(item.Name)
       select item;
