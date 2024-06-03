@@ -85,6 +85,11 @@ public class Trash
     DirectoryInfo trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
     List<FileDetails> trashContents = new List<FileDetails>();
     FileInfo[] trashInfoFiles = trashInfoDir.GetFiles();
+    if (trashInfoFiles.Length < 1)
+    {
+      return trashContents;
+    }
+
     foreach (FileInfo infoFile in trashInfoFiles)
     {
       FileStream stream = infoFile.Open(FileMode.Open);
@@ -151,7 +156,8 @@ public class Trash
     TestTrashDirectories();
     DirectoryInfo trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
     DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
-    Console.WriteLine(trashFilesDir.GetFiles().Length + " items in trash.");
+    Console.WriteLine(trashFilesDir.GetFileSystemInfos().Length + " items in trash.");
+    Console.WriteLine("Confirm deletion? Y/(N)");
     ConsoleKeyInfo confirmKey = Console.ReadKey(true);
     if (confirmKey.Key == ConsoleKey.Y)
     {
@@ -173,7 +179,7 @@ public class Trash
           case DirectoryInfo directoryInfo:
             try
             {
-              Directory.Delete(directoryInfo.FullName);
+              Directory.Delete(directoryInfo.FullName, true);
               break;
             }
             catch (Exception e)
