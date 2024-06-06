@@ -1,7 +1,6 @@
 ﻿using System.CommandLine;
 using System.Runtime.InteropServices;
 
-
 namespace Trashman
 {
   public static class Trashman
@@ -74,6 +73,9 @@ namespace Trashman
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.RestoreFromRecycleBin(file); }
       #endif
+      #if LINUX
+      Console.WriteLine("Not implemented"); // TODO
+      #endif
     }
 
     static void ListHandler()
@@ -124,6 +126,9 @@ namespace Trashman
 
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
+      #endif
+      #if LINUX
+      Console.WriteLine("Not implemented"); // TODO
       #endif
     }
 

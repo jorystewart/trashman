@@ -10,7 +10,10 @@ namespace Trashman;
 [SuppressMessage("ReSharper", "IdentifierTypo")]
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-public partial class RecycleBin
+[SuppressMessage("ReSharper", "StringLiteralTypo")]
+// This class is only included on Windows so it will never be called on other platforms
+
+public static partial class RecycleBin
 {
   #region Enums
 
@@ -106,35 +109,7 @@ public partial class RecycleBin
   {
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
-      Shell shell = new Shell();
-      Folder recycleBinFolder = shell.NameSpace(10);
-      FolderItems recycleBinItems = recycleBinFolder.Items();
-      string pattern = file.Replace("*", ".*?");
-      Regex starReplace = new Regex($"^{pattern}$");
-      IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
-        where starReplace.IsMatch(item.Name)
-        select item;
-      foreach (FolderItem item in searchResult)
-      {
-        foreach (FolderItemVerb verb in item.Verbs())
-        {
-          if (verb.Name.Contains("Restore") || (verb.Name.Contains("R&estore")))
-          {
-            try
-            {
-              verb.DoIt();
-            }
-            catch (Exception e)
-            {
-              Console.WriteLine("Failed to restore " + item.Name + ":" + e.Message);
-            }
-          }
-          else
-          {
-            Console.WriteLine("Unable to locate verb \"Restore\" on " + item.Name);
-          }
-        }
-      }
+      RestoreFromRecycleBinSTA(file);
     }
     else
     {
@@ -179,7 +154,7 @@ public partial class RecycleBin
     }
   }
 
-  public static Tuple<long,long> GetRecycleBinContentInfo()
+  private static Tuple<long,long> GetRecycleBinContentInfo()
   {
     SHQUERYRBINFO recycleBinQueryInfo = new SHQUERYRBINFO();
     recycleBinQueryInfo.cbSize = Marshal.SizeOf(typeof(SHQUERYRBINFO));
@@ -199,25 +174,7 @@ public partial class RecycleBin
   {
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
-      List<FileDetails> recycleBinItems = new List<FileDetails>();
-      Shell shell = new Shell();
-      Folder recycleBinFolder = shell.NameSpace(10);
-
-      if (recycleBinFolder.Items().Count < 1)
-      {
-        return recycleBinItems;
-      }
-      for (int i = 0; i < recycleBinFolder.Items().Count; i++)
-      {
-        FolderItem folderItem = recycleBinFolder.Items().Item(i);
-        FileDetails fileDetails = new FileDetails(
-          recycleBinFolder.GetDetailsOf(folderItem, 0),
-          recycleBinFolder.GetDetailsOf(folderItem, 3).TrimStart().TrimEnd().Replace("bytes", "B"),
-          recycleBinFolder.GetDetailsOf(folderItem, 1),
-          (recycleBinFolder.GetDetailsOf(folderItem, 2)).Replace("?", "").TrimStart().TrimEnd()
-        );
-        recycleBinItems.Add(fileDetails);
-      }
+      List<FileDetails> recycleBinItems = GetRecycleBinItemsSTA();
       return recycleBinItems;
     }
     else
@@ -286,82 +243,7 @@ public partial class RecycleBin
   {
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
-      Shell shell = new Shell();
-      Folder recycleBinFolder = shell.NameSpace(10);
-      FolderItems recycleBinItems = recycleBinFolder.Items();
-      string pattern = file.Replace("*", ".*");
-      Regex starReplace = new Regex($"^(?i){pattern}$");
-      IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
-        where starReplace.IsMatch(item.Name)
-        select item;
-
-      foreach (FolderItem item in searchResult)
-      {
-        if (item.IsFileSystem == false)
-        {
-          Console.WriteLine("Error: " + item.Name + " is not a normal filesystem object. Ignoring.");
-          continue;
-        }
-
-        if (item.IsFolder)
-        {
-          try
-          {
-            Directory.Delete(item.Path, true);
-          }
-          catch (Exception e) when (e is ArgumentNullException or ArgumentException)
-          {
-            Console.WriteLine("Error: path is null or empty, or includes invalid characters");
-          }
-          catch (Exception e) when (e is IOException)
-          {
-            Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
-          }
-          catch (Exception e) when (e is PathTooLongException)
-          {
-            Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-          }
-          catch (Exception e) when (e is UnauthorizedAccessException)
-          {
-            Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-          }
-          catch (Exception e) when (e is DirectoryNotFoundException)
-          {
-            Console.WriteLine("Error: " + item.Path + " was not found");
-          }
-          catch (Exception e)
-          {
-            Console.WriteLine("Error: " + e);
-          }
-        }
-        else
-        {
-          try
-          {
-            File.Delete(item.Path);
-          }
-          catch (Exception e) when (e is ArgumentNullException or ArgumentException)
-          {
-            Console.WriteLine("Error: path is null or empty, or includes invalid characters");
-          }
-          catch (Exception e) when (e is IOException)
-          {
-            Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
-          }
-          catch (Exception e) when (e is NotSupportedException or PathTooLongException)
-          {
-            Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-          }
-          catch (Exception e) when (e is UnauthorizedAccessException)
-          {
-            Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-          }
-          catch (Exception e)
-          {
-            Console.WriteLine("Error: " + e);
-          }
-        }
-      }
+      PurgeFromRecycleBinSTA(file);
     }
     else
     {
@@ -375,15 +257,27 @@ public partial class RecycleBin
 
   private static void PurgeFromRecycleBinSTA(string file)
   {
+    Regex reservedCharacters = new Regex(@"[<>:|?""]+");
+    if (reservedCharacters.IsMatch(file))
+    {
+      Console.WriteLine("Invalid character in input" + file);
+      return;
+    }
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
     string pattern = file.Replace("*", ".*");
+    pattern = pattern.Replace(@"\", @"\\");
+    pattern = pattern.Replace(@".", @"\.");
     Regex starReplace = new Regex($"^(?i){pattern}$");
     IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
       where starReplace.IsMatch(item.Name)
       select item;
 
+    if (!searchResult.Any())
+    {
+      Console.WriteLine("No results for " + file + " in Recycle Bin.");
+    }
     foreach (FolderItem item in searchResult)
     {
       if (item.IsFileSystem == false)
