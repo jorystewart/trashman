@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text.RegularExpressions;
 using Microsoft.VisualBasic.FileIO;
@@ -6,11 +7,15 @@ using Shell32;
 
 namespace Trashman;
 
+[SuppressMessage("ReSharper", "IdentifierTypo")]
+[SuppressMessage("ReSharper", "InconsistentNaming")]
+[SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
 public partial class RecycleBin
 {
   #region Enums
 
   [Flags]
+  [SuppressMessage("ReSharper", "InconsistentNaming")]
   enum RecycleBinFlags: uint
   {
     SHERB_NOCONFIRMATION = 0x00000001,
@@ -39,6 +44,7 @@ public partial class RecycleBin
   private static partial int SHQueryRecycleBinW(string pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
 
   [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
+  [SuppressMessage("ReSharper", "IdentifierTypo")]
   private static partial int SHEmptyRecycleBinW(IntPtr hwnd, string pszRootPath, uint dwFlags);
 
   #endregion
@@ -293,7 +299,7 @@ public partial class RecycleBin
       {
         if (item.IsFileSystem == false)
         {
-          Console.WriteLine("File isFileSystem false, what do?"); // TODO
+          Console.WriteLine("Error: " + item.Name + " is not a normal filesystem object. Ignoring.");
           continue;
         }
 
@@ -382,7 +388,7 @@ public partial class RecycleBin
     {
       if (item.IsFileSystem == false)
       {
-        Console.WriteLine("File isFileSystem false, what do?"); // TODO
+        Console.WriteLine("Error: " + item.Name + " is not a normal filesystem object. Ignoring.");
         continue;
       }
 
