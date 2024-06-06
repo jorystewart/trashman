@@ -14,10 +14,8 @@ namespace Trashman
       Command listCommand = new Command(name: "list", description: "List files currently in trash");
       Command emptyCommand = new Command(name: "empty", description: "Permanently delete all files in trash");
       Command purgeCommand = new Command(name: "purge", description: "Permanently delete a file from trash");
-      Command testCommand = new Command(name: "test", description: "For testing purposes");
 
       Argument<string> fileArg = new Argument<string>(name: "file", description: "Target file");
-      Argument<string> testArg = new Argument<string>(name: "test", description: "testArg");
       Argument<string> searchArg = new Argument<string>(name: "file", description: "File name to search for");
 
       rootCommand.AddCommand(deleteCommand);
@@ -25,7 +23,6 @@ namespace Trashman
       rootCommand.AddCommand(listCommand);
       rootCommand.AddCommand(emptyCommand);
       rootCommand.AddCommand(purgeCommand);
-      rootCommand.AddCommand(testCommand);
 
       deleteCommand.AddArgument(fileArg);
       restoreCommand.AddArgument(searchArg);
@@ -36,9 +33,6 @@ namespace Trashman
       listCommand.SetHandler(ListHandler);
       emptyCommand.SetHandler(EmptyHandler);
       purgeCommand.SetHandler(PurgeHandler, searchArg);
-
-      testCommand.AddArgument(testArg);
-      testCommand.SetHandler(TestHandler, testArg);
 
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -131,18 +125,6 @@ namespace Trashman
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
       #endif
-    }
-
-    static void TestHandler(string inputPath)
-    {
-      string processedPath = HelperFunctions.ProcessInputPathString(inputPath);
-      List<string> searchResults = HelperFunctions.PerformGlobSearch(processedPath);
-
-      foreach (string result in searchResults)
-      {
-        Console.WriteLine(result);
-      }
-
     }
 
   }
