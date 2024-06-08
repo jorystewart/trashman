@@ -3,3 +3,5 @@ obj/
 .idea/
 .vs/
 *.user
+Trashman.Tests/bin
+Trashman.Tests/obj
