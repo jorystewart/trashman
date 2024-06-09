@@ -1,20 +1,30 @@
-using Xunit;
 
 
 namespace Trashman.Tests;
 
-public class Setup : IDisposable
+public class RecycleBinTestsSetup : IDisposable
 {
 
-  private readonly string _baseTestDir = @"D:\source\repos\jorystewart\trashman\tests";
-  private readonly List<string> filesToCreate = [
+  private readonly string _baseTestDir = @"D:\source\repos\jorystewart\trashman\tests\";
+  private readonly List<string> _filesToCreate = [
     @"test.txt",
-    @"a.b"
+    @"a.b",
+    @"text.txt",
+    @"5444aaaafimif9.json",
+    @"RecursiveTest\aaa.json",
+    @"RecursiveTest\Recursion1\bbb.json",
+    @"RecursiveTest\aaa.txt",
+    @"RecursiveTest\Recursion2\aaa.txt"
   ];
-  private readonly List<string> directoriesToCreate = new List<string>();
+  private readonly List<string> _directoriesToCreate = [
+    @"TestDir",
+    @"RecursiveTest",
+    @"RecursiveTest\Recursion1",
+    @"RecursiveTest\Recursion2"
+  ];
 
 
-  protected Setup()
+  protected RecycleBinTestsSetup()
   {
     if (Directory.Exists(_baseTestDir))
     {
@@ -23,17 +33,15 @@ public class Setup : IDisposable
 
     Directory.CreateDirectory(_baseTestDir);
 
-    foreach (string item in directoriesToCreate)
+    foreach (string item in _directoriesToCreate)
     {
       Directory.CreateDirectory(_baseTestDir + item);
     }
 
-    foreach (string item in filesToCreate)
+    foreach (string item in _filesToCreate)
     {
       File.Create(_baseTestDir + item);
     }
-
-
 
 
   }
@@ -43,15 +51,16 @@ public class Setup : IDisposable
     Directory.Delete(_baseTestDir, true);
   }
 
-
-
-
-}
-
-public class RecycleBinTests
-{
   [Fact]
-  public void Test1()
+  public void FileDeletionTest()
   {
   }
+
+  [Fact]
+  public void FileRestoreTest()
+  {
+
+  }
+
+
 }
