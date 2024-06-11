@@ -5,3 +5,5 @@ obj/
 *.user
 Trashman.Tests/bin
 Trashman.Tests/obj
+Trashman/bin/
+Trashman/obj/

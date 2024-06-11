@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trashman", "trashman.csproj", "{6C88A002-D2F5-4999-B3EF-3D3348401311}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trashman", "Trashman\trashman.csproj", "{6C88A002-D2F5-4999-B3EF-3D3348401311}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trashman.Tests", "Trashman.Tests\Trashman.Tests.csproj", "{470DB44B-B0E8-4F99-8B21-896659E99EDC}"
 EndProject
