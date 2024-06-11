@@ -8,7 +8,7 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 namespace Trashman;
 
-public class HelperFunctions
+public static class HelperFunctions
 {
   public static string ConvertBytes(long bytes)
   {

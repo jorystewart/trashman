@@ -68,7 +68,12 @@ public class Trash
   public static void RestoreFromTrash(string file)
   {
     TestTrashDirectories();
-    file = HelperFunctions.ProcessInputPathString(file);
+    if (file.Contains('/'))
+    {
+      Console.WriteLine("Invalid character in input: " + file);
+      return;
+    }
+
 
     // TODO
   }

@@ -115,6 +115,12 @@ public static partial class RecycleBin
 
   private static void RestoreFromRecycleBinSTA(string file)
   {
+    Regex reservedCharacters = new Regex(@"[<>:|?""]+");
+    if (reservedCharacters.IsMatch(file))
+    {
+      Console.WriteLine("Invalid character in input: " + file);
+      return;
+    }
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();

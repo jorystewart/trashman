@@ -31,10 +31,26 @@ public class RecycleBinTestsSetup : IDisposable
   {
     if (Directory.Exists(_baseTestDir))
     {
-      // Fail test
+      try
+      {
+        Directory.Delete(_baseTestDir, true);
+      }
+      catch
+      {
+        Console.WriteLine("Failed to delete pre-existing testing directory");
+        Assert.Fail();
+      }
     }
 
-    Directory.CreateDirectory(_baseTestDir);
+    try
+    {
+      Directory.CreateDirectory(_baseTestDir);
+    }
+    catch
+    {
+      Console.WriteLine("Failed to create testing directory");
+      Assert.Fail();
+    }
 
     foreach (string item in _directoriesToCreate)
     {
