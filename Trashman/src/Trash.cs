@@ -401,16 +401,188 @@ public class Trash
   public static void purgeFromTrash(string file)
   {
     TestTrashDirectories();
-    file = HelperFunctions.ProcessInputPathString(file);
+    if (file.Contains('/'))
+    {
+      Console.WriteLine("Invalid character in input: " + file);
+      return;
+    }
 
+    TestTrashDirectories();
+    DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
+    DirectoryInfo trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
+    List<Tuple<FileInfo,FileDetails>> trashContents = new List<Tuple<FileInfo, FileDetails>>();
+    FileInfo[] trashInfoFiles = trashInfoDir.GetFiles();
+    if (trashInfoFiles.Length <= 0)
+    {
+      return;
+    }
 
-    // TODO
+    foreach (FileInfo infoFile in trashInfoFiles)
+    {
+      FileStream stream = infoFile.Open(FileMode.Open);
+      StreamReader reader = new StreamReader(stream);
+      FileDetails fileDetails = new FileDetails();
+      string? readString;
+      while (!reader.EndOfStream)
+      {
+        readString = reader.ReadLine();
+        if (readString == null || readString[0] == '[')
+        {
+          continue;
+        }
+
+        KeyValuePair<string, string> kvp =
+          new KeyValuePair<string, string>(readString.Split('=')[0], readString.Split('=')[1]);
+
+        switch (kvp.Key)
+        {
+          case "Path":
+            fileDetails.OriginalPath = kvp.Value;
+            fileDetails.Name = kvp.Value.Split('/')[^1];
+            break;
+          case "DeletionDate":
+            string timeString = kvp.Value;
+            timeString = timeString.Replace('-', '/');
+            timeString = timeString.Replace('T', ' ');
+            fileDetails.TimeDeleted = timeString;
+            break;
+        }
+      }
+
+      if (File.Exists(trashFilesDir + "/" + fileDetails.Name))
+      {
+        fileDetails.Size = HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
+      }
+      else if (Directory.Exists(trashFilesDir + "/" + fileDetails.Name))
+      {
+        FileSystemInfo[] contents = new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name).GetFileSystemInfos("*", SearchOption.AllDirectories);
+        long totalSize = 0;
+        foreach (FileSystemInfo item in contents)
+        {
+          switch (item)
+          {
+            case FileInfo fileInfo:
+              totalSize = totalSize + fileInfo.Length;
+              break;
+          }
+        }
+
+        fileDetails.Size = HelperFunctions.ConvertBytes(totalSize);
+      }
+      Tuple<FileInfo, FileDetails> trashItem = new Tuple<FileInfo, FileDetails>(infoFile, fileDetails);
+      trashContents.Add(trashItem);
+    }
+    string pattern = file.Replace(@".", @"\.");
+    pattern = pattern.Replace("*", @".*");
+    Regex starReplace = new Regex($"^{pattern}$");
+    IEnumerable<Tuple<FileInfo,FileDetails>> searchResult = from item in (trashContents)
+      where starReplace.IsMatch(item.Item2.Name)
+      select item;
+
+    foreach (Tuple<FileInfo, FileDetails> item in searchResult)
+    {
+      if (File.Exists(trashFilesDir + "/" + item.Item2.Name))
+      {
+        try
+        {
+          File.Delete(trashFilesDir + "/" + item.Item2.Name);
+        }
+        catch (Exception e) when (e is ArgumentException or ArgumentNullException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - null argument");
+          continue;
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - insufficient permissions.");
+          continue;
+        }
+        catch (Exception e) when (e is PathTooLongException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name +
+                            " - path exceeds system maximum path length");
+          continue;
+        }
+        catch (Exception e) when (e is DirectoryNotFoundException or NotSupportedException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - unable to locate file.");
+          continue;
+        }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + "(IOException)");
+          continue;
+        }
+
+        try
+        {
+          item.Item1.Delete();
+        }
+        catch (Exception e) when (e is SecurityException)
+        {
+          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - insufficient permissions");
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException)
+        {
+          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - item is a directory");
+        }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - IOException");
+        }
+      }
+
+      else if (Directory.Exists(trashFilesDir + "/" + item.Item2.Name))
+      {
+        try
+        {
+          Directory.Delete(trashFilesDir + "/" + item.Item2.Name, true);
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - insufficient permissions.");
+          continue;
+        }
+        catch (Exception e) when (e is ArgumentException or ArgumentNullException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - source or destination is null");
+          continue;
+        }
+        catch (Exception e) when (e is DirectoryNotFoundException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - unable to find directory");
+          continue;
+        }
+        catch (Exception e) when (e is PathTooLongException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - path exceeds system maximum path length");
+          continue;
+        }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Error: failed to delete " + item.Item2.Name + "(IOException)");
+          continue;
+        }
+
+        try
+        {
+          item.Item1.Delete();
+        }
+        catch (Exception e) when (e is SecurityException)
+        {
+          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - insufficient permissions");
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException)
+        {
+          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - item is a directory");
+        }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - IOException");
+        }
+      }
+    }
   }
-
-
-
-
-
 
 }
 
