@@ -74,7 +74,7 @@ namespace Trashman
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.RestoreFromRecycleBin(file); }
       #endif
       #if LINUX
-      Console.WriteLine("Not implemented"); // TODO
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.RestoreFromTrash(file);}
       #endif
     }
 
