@@ -1,7 +1,9 @@
-﻿# TrashMan is a cross-platform CLI tool for managing the Recycle Bin on Windows and Trash on Linux.
+﻿# Trashman is a cross-platform CLI tool for managing the Recycle Bin on Windows and Trash on Linux.
 
 ---
-Trashman requires the .NET 8 runtime, but can be compiled into a standalone executable as well.
+Trashman requires the .NET 8 runtime, but can be compiled into a standalone executable instead. 
+
+Trashman conforms to the FreeDesktop trash standard, found here: https://specifications.freedesktop.org/trash-spec/trashspec-latest.html
 
 ---
 
@@ -28,7 +30,7 @@ It supports the wildcard character `*`
 * Windows implementation:
   - [ ] Tab completion for trasher restore and trasher purge  
 
-* Linux implementation:~~~~
+* Linux implementation:
   - [ ]  Exception detection and handling
   - [ ]  Tab completion
 
