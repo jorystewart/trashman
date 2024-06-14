@@ -128,7 +128,7 @@ namespace Trashman
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
       #endif
       #if LINUX
-      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.purgeFromTras](file);}
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.purgeFromTrash(file);}
       #endif
     }
 
