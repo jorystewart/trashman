@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Security;
+﻿using System.Security;
 using System.Text.RegularExpressions;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace Trashman;
 
