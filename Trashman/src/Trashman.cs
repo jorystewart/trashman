@@ -15,23 +15,39 @@ namespace Trashman
       Command purgeCommand = new Command(name: "purge", description: "Permanently delete a file from trash");
 
       Argument<string> fileArg = new Argument<string>(name: "file", description: "Target file");
+      Option<string> deleteOption = new Option<string>(aliases: ["--file", "-d"], description: "Target file");
+      deleteOption.AllowMultipleArgumentsPerToken = true;
+      deleteOption.IsRequired = true;
       Argument<string> searchArg = new Argument<string>(name: "file", description: "File name to search for");
+      Option<string> searchOption = new Option<string>(name: "file", description: "File name to search for");
 
       rootCommand.AddCommand(deleteCommand);
+      rootCommand.AddOption(deleteOption);
       rootCommand.AddCommand(restoreCommand);
       rootCommand.AddCommand(listCommand);
       rootCommand.AddCommand(emptyCommand);
       rootCommand.AddCommand(purgeCommand);
 
-      deleteCommand.AddArgument(fileArg);
+      //deleteCommand.AddArgument(fileArg);
+      deleteCommand.AddOption(deleteOption);
       restoreCommand.AddArgument(searchArg);
       purgeCommand.AddArgument(searchArg);
 
-      deleteCommand.SetHandler(DeleteHandler, fileArg);
+      //deleteCommand.SetHandler(DeleteHandler, fileArg);
+      deleteCommand.AddAlias("d");
+      deleteCommand.AddAlias("D");
       restoreCommand.SetHandler(RestoreHandler, searchArg);
+      restoreCommand.AddAlias("r");
+      restoreCommand.AddAlias("R");
       listCommand.SetHandler(ListHandler);
+      listCommand.AddAlias("l");
+      listCommand.AddAlias("L");
       emptyCommand.SetHandler(EmptyHandler);
+      emptyCommand.AddAlias("e");
+      emptyCommand.AddAlias("E");
       purgeCommand.SetHandler(PurgeHandler, searchArg);
+      purgeCommand.AddAlias("p");
+      purgeCommand.AddAlias("P");
 
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
