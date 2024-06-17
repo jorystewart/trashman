@@ -68,14 +68,10 @@ public class Trash
     }
   }
 
-  public static void RestoreFromTrash(string file)
+  public static void RestoreFromTrash(List<string> fileList)
   {
     TestTrashDirectories();
-    if (file.Contains('/'))
-    {
-      Console.WriteLine("Invalid character in input: " + file);
-      return;
-    }
+
 
     TestTrashDirectories();
     DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
@@ -142,128 +138,138 @@ public class Trash
       Tuple<FileInfo, FileDetails> trashItem = new Tuple<FileInfo, FileDetails>(infoFile, fileDetails);
       trashContents.Add(trashItem);
     }
-    string pattern = file.Replace(@".", @"\.");
-    pattern = pattern.Replace("*", @".*");
-    Regex starReplace = new Regex($"^{pattern}$");
-    IEnumerable<Tuple<FileInfo,FileDetails>> searchResult = from item in (trashContents)
+
+    foreach (string file in fileList)
+    {
+      if (file.Contains('/'))
+      {
+        Console.WriteLine("Invalid character in input: " + file);
+        return;
+      }
+      string pattern = file.Replace(@".", @"\.");
+      pattern = pattern.Replace("*", @".*");
+      Regex starReplace = new Regex($"^{pattern}$");
+
+       IEnumerable<Tuple<FileInfo,FileDetails>> searchResult = from item in (trashContents)
       where starReplace.IsMatch(item.Item2.Name)
       select item;
 
-    foreach (Tuple<FileInfo, FileDetails> item in searchResult)
-    {
-      if (File.Exists(trashFilesDir + "/" + item.Item2.Name))
+      foreach (Tuple<FileInfo, FileDetails> item in searchResult)
       {
-        try
+        if (File.Exists(trashFilesDir + "/" + item.Item2.Name))
         {
-          File.Move(trashFilesDir + "/" + item.Item2.Name, item.Item2.OriginalPath);
-        }
-        catch (Exception e) when (e is ArgumentException or ArgumentNullException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - source or destination is null");
-          continue;
-        }
-        catch (Exception e) when (e is UnauthorizedAccessException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - insufficient permissions.");
-          continue;
-        }
-        catch (Exception e) when (e is PathTooLongException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name +
-                            " - source or destination path exceeds system maximum path length");
-          continue;
-        }
-        catch (Exception e) when (e is FileNotFoundException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - unable to locate file.");
-          continue;
-        }
-        catch (Exception e) when (e is DirectoryNotFoundException or NotSupportedException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - target or destination is invalid");
-          continue;
-        }
-        catch (Exception e) when (e is IOException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + "(IOException)");
-          continue;
-        }
-        catch (Exception e)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - " + e);
-          continue;
-        }
-        try
-        {
-          item.Item1.Delete();
-        }
-        catch (Exception e) when (e is SecurityException)
-        {
-          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - insufficient permissions");
-        }
-        catch (Exception e) when (e is UnauthorizedAccessException)
-        {
-          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - item is a directory");
-        }
-        catch (Exception e) when (e is IOException)
-        {
-          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - IOException");
-        }
-      }
-
-      else if (Directory.Exists(trashFilesDir + "/" + item.Item2.Name))
-      {
-        try
-        {
-          Directory.Move(trashFilesDir + "/" + item.Item2.Name, item.Item2.OriginalPath);
-        }
-        catch (Exception e) when (e is UnauthorizedAccessException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - insufficient permissions.");
-          continue;
-        }
-        catch (Exception e) when (e is ArgumentException or ArgumentNullException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - source or destination is null");
-          continue;
-        }
-        catch (Exception e) when (e is DirectoryNotFoundException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - original location not found");
-          continue;
-        }
-        catch (Exception e) when (e is PathTooLongException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name +
-                            " - source or destination path exceeds system maximum path length");
-          continue;
-        }
-        catch (Exception e) when (e is IOException)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + "(IOException)");
-          continue;
-        }
-        catch (Exception e)
-        {
-          Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - " + e);
-          continue;
+          try
+          {
+            File.Move(trashFilesDir + "/" + item.Item2.Name, item.Item2.OriginalPath);
+          }
+          catch (Exception e) when (e is ArgumentException or ArgumentNullException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - source or destination is null");
+            continue;
+          }
+          catch (Exception e) when (e is UnauthorizedAccessException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - insufficient permissions.");
+            continue;
+          }
+          catch (Exception e) when (e is PathTooLongException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name +
+                              " - source or destination path exceeds system maximum path length");
+            continue;
+          }
+          catch (Exception e) when (e is FileNotFoundException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - unable to locate file.");
+            continue;
+          }
+          catch (Exception e) when (e is DirectoryNotFoundException or NotSupportedException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - target or destination is invalid");
+            continue;
+          }
+          catch (Exception e) when (e is IOException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + "(IOException)");
+            continue;
+          }
+          catch (Exception e)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - " + e);
+            continue;
+          }
+          try
+          {
+            item.Item1.Delete();
+          }
+          catch (Exception e) when (e is SecurityException)
+          {
+            Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - insufficient permissions");
+          }
+          catch (Exception e) when (e is UnauthorizedAccessException)
+          {
+            Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - item is a directory");
+          }
+          catch (Exception e) when (e is IOException)
+          {
+            Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - IOException");
+          }
         }
 
-        try
+        else if (Directory.Exists(trashFilesDir + "/" + item.Item2.Name))
         {
-          item.Item1.Delete();
-        }
-        catch (Exception e) when (e is SecurityException)
-        {
-          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - insufficient permissions");
-        }
-        catch (Exception e) when (e is UnauthorizedAccessException)
-        {
-          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - item is a directory");
-        }
-        catch (Exception e) when (e is IOException)
-        {
-          Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - IOException");
+          try
+          {
+            Directory.Move(trashFilesDir + "/" + item.Item2.Name, item.Item2.OriginalPath);
+          }
+          catch (Exception e) when (e is UnauthorizedAccessException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - insufficient permissions.");
+            continue;
+          }
+          catch (Exception e) when (e is ArgumentException or ArgumentNullException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - source or destination is null");
+            continue;
+          }
+          catch (Exception e) when (e is DirectoryNotFoundException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - original location not found");
+            continue;
+          }
+          catch (Exception e) when (e is PathTooLongException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name +
+                              " - source or destination path exceeds system maximum path length");
+            continue;
+          }
+          catch (Exception e) when (e is IOException)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + "(IOException)");
+            continue;
+          }
+          catch (Exception e)
+          {
+            Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - " + e);
+            continue;
+          }
+
+          try
+          {
+            item.Item1.Delete();
+          }
+          catch (Exception e) when (e is SecurityException)
+          {
+            Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - insufficient permissions");
+          }
+          catch (Exception e) when (e is UnauthorizedAccessException)
+          {
+            Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - item is a directory");
+          }
+          catch (Exception e) when (e is IOException)
+          {
+            Console.WriteLine("Error: failed to clean " + item.Item1.Name + " - IOException");
+          }
         }
       }
     }
@@ -396,7 +402,7 @@ public class Trash
     }
   }
 
-  public static void purgeFromTrash(string file)
+  public static void PurgeFromTrash(string file)
   {
     TestTrashDirectories();
     if (file.Contains('/'))

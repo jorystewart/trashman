@@ -278,6 +278,56 @@ public static class HelperFunctions
 
   }
 
+  public static List<string> CheckMultiArgCount(string input)
+  {
+    List<string> returnList = new List<string>();
+    if (!(input.Contains('"') || input.Contains('\'')))
+    {
+      foreach (string item in input.Split(" "))
+      {
+        returnList.Add(item);
+      }
+      return returnList;
+    }
 
+    if (input.Contains('"') && !input.Contains('\''))
+    {
+      string[] splitString = input.Split(' ');
+      for (int i = 0; i < splitString.Length; i++)
+      {
+        if (splitString[i].Contains('"'))
+        {
+          int startElement = i;
+          int endElement = i;
+          for (int j = i+1; j < splitString.Length - i; j++)
+          {
+            if (splitString[j].Contains('"'))
+            {
+              endElement = j;
+              break;
+            }
+          }
+          returnList.Add(String.Join(' ', splitString[startElement..(endElement+1)]));
+        }
+      }
+    }
+
+    return returnList;
+  }
+
+  public static List<int> GetAllCharIndexes(string input, char search, List<int> list)
+  {
+    if (!input.Contains(search))
+    {
+      return list;
+    }
+    else
+    {
+      list.Add(input.IndexOf(search));
+      list = GetAllCharIndexes(input.Substring(input.IndexOf(search)), search, list);
+    }
+
+    return list;
+  }
 
 }
