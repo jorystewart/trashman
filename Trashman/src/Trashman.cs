@@ -52,10 +52,7 @@ namespace Trashman
       emptyCommand.AddAlias("E");
       purgeCommand.SetHandler((filesToPurge) =>
       {
-        foreach (string file in filesToPurge)
-        {
-          PurgeHandler(file);
-        }
+          PurgeHandler(filesToPurge);
       }, purgeArg);
       purgeCommand.AddAlias("p");
       purgeCommand.AddAlias("P");
@@ -95,9 +92,10 @@ namespace Trashman
 
     static void RestoreHandler(List<string> file)
     {
-      if (file.Contains("**") || file.Contains('/')) { return; }
-      file.
-
+      if (file.Count < 1)
+      {
+        return;
+      }
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.RestoreFromRecycleBin(file); }
       #endif
@@ -148,10 +146,12 @@ namespace Trashman
       #endif
     }
 
-    static void PurgeHandler(string file)
+    static void PurgeHandler(List<string> file)
     {
-      if (file.Contains("**") || file.Contains('/')) { return; }
-
+      if (file.Count < 1)
+      {
+        return;
+      }
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
       #endif
