@@ -25,7 +25,6 @@ public static class HelperFunctions
     }
   }
 
-
   public static void WriteConsoleTable(List<FileDetails> list)
   {
     int consoleWidth = Console.WindowWidth;
@@ -75,7 +74,6 @@ public static class HelperFunctions
     );
 
     WriteTableInfo(list, columnHeaderInfo);
-
   }
 
   private static void WriteColumnHeaders(Dictionary<string, int> columnsInfo)
@@ -118,7 +116,6 @@ public static class HelperFunctions
 
     builder.Append('+');
     Console.WriteLine(builder.ToString());
-
   }
 
   private static void WriteTableInfo(List<FileDetails> list, Dictionary<string, int> columnData)
@@ -170,7 +167,6 @@ public static class HelperFunctions
     Regex doubleDotMatch = new Regex(@"[\\/].{2}[\\/]"); // contains 2 dots surrounded by forward or back slashes
     Regex tildeMatch = new Regex(@"[\\/]~[\\/]"); // contains a tilde surrounded by forward or back slashes
     Regex doubleDotReplacementTarget = new Regex(@"[^\\/]*[\\/]\.{2}[\\/]");
-
 
     if (!inputPath.Contains('/') && !inputPath.Contains('\\'))
     {
@@ -275,59 +271,22 @@ public static class HelperFunctions
       filePaths.Add(file);
       return filePaths;
     }
-
   }
 
-  public static List<string> CheckMultiArgCount(string input)
+  public static long GetTotalDirectorySize(DirectoryInfo directory)
   {
-    List<string> returnList = new List<string>();
-    if (!(input.Contains('"') || input.Contains('\'')))
+    long totalSize = 0;
+    foreach (FileSystemInfo subItem in directory.EnumerateFileSystemInfos("*", SearchOption.AllDirectories))
     {
-      foreach (string item in input.Split(" "))
+      switch (subItem)
       {
-        returnList.Add(item);
-      }
-      return returnList;
-    }
-
-    if (input.Contains('"') && !input.Contains('\''))
-    {
-      string[] splitString = input.Split(' ');
-      for (int i = 0; i < splitString.Length; i++)
-      {
-        if (splitString[i].Contains('"'))
-        {
-          int startElement = i;
-          int endElement = i;
-          for (int j = i+1; j < splitString.Length - i; j++)
-          {
-            if (splitString[j].Contains('"'))
-            {
-              endElement = j;
-              break;
-            }
-          }
-          returnList.Add(String.Join(' ', splitString[startElement..(endElement+1)]));
-        }
+        case FileInfo subFile:
+          totalSize = totalSize + subFile.Length;
+          break;
       }
     }
 
-    return returnList;
-  }
-
-  public static List<int> GetAllCharIndexes(string input, char search, List<int> list)
-  {
-    if (!input.Contains(search))
-    {
-      return list;
-    }
-    else
-    {
-      list.Add(input.IndexOf(search));
-      list = GetAllCharIndexes(input.Substring(input.IndexOf(search)), search, list);
-    }
-
-    return list;
+    return totalSize;
   }
 
 }

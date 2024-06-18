@@ -18,7 +18,6 @@ namespace Trashman
       Argument<List<string>> restoreArg = new Argument<List<string>>(name: "file", description: "File(s) to restore");
       Argument<List<string>> purgeArg = new Argument<List<string>>(name: "file", description: "File(s) to purge");
 
-
       rootCommand.AddCommand(deleteCommand);
       rootCommand.AddCommand(restoreCommand);
       rootCommand.AddCommand(listCommand);
@@ -38,10 +37,7 @@ namespace Trashman
       }, fileArg);
       deleteCommand.AddAlias("d");
       deleteCommand.AddAlias("D");
-      restoreCommand.SetHandler((filesToRestore) =>
-      {
-        RestoreHandler(filesToRestore);
-      }, restoreArg);
+      restoreCommand.SetHandler(RestoreHandler, restoreArg);
       restoreCommand.AddAlias("r");
       restoreCommand.AddAlias("R");
       listCommand.SetHandler(ListHandler);
@@ -50,10 +46,7 @@ namespace Trashman
       emptyCommand.SetHandler(EmptyHandler);
       emptyCommand.AddAlias("e");
       emptyCommand.AddAlias("E");
-      purgeCommand.SetHandler((filesToPurge) =>
-      {
-          PurgeHandler(filesToPurge);
-      }, purgeArg);
+      purgeCommand.SetHandler(PurgeHandler, purgeArg);
       purgeCommand.AddAlias("p");
       purgeCommand.AddAlias("P");
 

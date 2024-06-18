@@ -5,13 +5,28 @@ namespace Trashman;
 
 public class Trash
 {
-  private static string _trashLocation = (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) || Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null) ? Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash" : Environment.GetEnvironmentVariable("XFG_DATA_HOME") + "/Trash";
+  private static string _trashLocation =
+    (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) ||
+     Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null)
+      ? Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash"
+      : Environment.GetEnvironmentVariable("XDG_DATA_HOME") + "/Trash";
 
-  public static void TestTrashDirectories()
+  private static void TestTrashDirectories()
   {
-    if (!Directory.Exists(_trashLocation)) { Directory.CreateDirectory(_trashLocation, (UnixFileMode.UserRead | UnixFileMode.UserWrite)); }
-    if (!Directory.Exists(_trashLocation + "/files")) { Directory.CreateDirectory(_trashLocation + "/files"); }
-    if (!Directory.Exists(_trashLocation + "/info")) { Directory.CreateDirectory(_trashLocation + "/info"); }
+    if (!Directory.Exists(_trashLocation))
+    {
+      Directory.CreateDirectory(_trashLocation, (UnixFileMode.UserRead | UnixFileMode.UserWrite));
+    }
+
+    if (!Directory.Exists(_trashLocation + "/files"))
+    {
+      Directory.CreateDirectory(_trashLocation + "/files");
+    }
+
+    if (!Directory.Exists(_trashLocation + "/info"))
+    {
+      Directory.CreateDirectory(_trashLocation + "/info");
+    }
   }
 
   public static void SendToTrash(FileSystemInfo file)
@@ -74,7 +89,7 @@ public class Trash
 
     DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
     DirectoryInfo trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
-    List<Tuple<FileInfo,FileDetails>> trashContents = new List<Tuple<FileInfo, FileDetails>>();
+    List<Tuple<FileInfo, FileDetails>> trashContents = new List<Tuple<FileInfo, FileDetails>>();
     FileInfo[] trashInfoFiles = trashInfoDir.GetFiles();
     if (trashInfoFiles.Length <= 0)
     {
@@ -115,11 +130,14 @@ public class Trash
 
       if (File.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
-        fileDetails.Size = HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
+        fileDetails.Size =
+          HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
       }
       else if (Directory.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
-        FileSystemInfo[] contents = new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name).GetFileSystemInfos("*", SearchOption.AllDirectories);
+        FileSystemInfo[] contents =
+          new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name).GetFileSystemInfos("*",
+            SearchOption.AllDirectories);
         long totalSize = 0;
         foreach (FileSystemInfo item in contents)
         {
@@ -133,6 +151,7 @@ public class Trash
 
         fileDetails.Size = HelperFunctions.ConvertBytes(totalSize);
       }
+
       Tuple<FileInfo, FileDetails> trashItem = new Tuple<FileInfo, FileDetails>(infoFile, fileDetails);
       trashContents.Add(trashItem);
     }
@@ -144,13 +163,14 @@ public class Trash
         Console.WriteLine("Invalid character in input: " + file);
         continue;
       }
+
       string pattern = file.Replace(@".", @"\.");
       pattern = pattern.Replace("*", @".*");
       Regex starReplace = new Regex($"^{pattern}$");
 
-       IEnumerable<Tuple<FileInfo,FileDetails>> searchResult = from item in (trashContents)
-      where starReplace.IsMatch(item.Item2.Name)
-      select item;
+      IEnumerable<Tuple<FileInfo, FileDetails>> searchResult = from item in (trashContents)
+        where starReplace.IsMatch(item.Item2.Name)
+        select item;
 
       foreach (Tuple<FileInfo, FileDetails> item in searchResult)
       {
@@ -196,6 +216,7 @@ public class Trash
             Console.WriteLine("Error: failed to restore " + item.Item2.Name + " - " + e);
             continue;
           }
+
           try
           {
             item.Item1.Delete();
@@ -306,7 +327,7 @@ public class Trash
         {
           case "Path":
             fileDetails.OriginalPath = kvp.Value;
-            fileDetails.Name = kvp.Value.Split('/')[^1];
+            fileDetails.Name = kvp.Value.TrimEnd('/').Split('/')[^1];
             break;
           case "DeletionDate":
             string timeString = kvp.Value;
@@ -319,27 +340,17 @@ public class Trash
 
       if (File.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
-        fileDetails.Size = HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
+        fileDetails.Size =
+          HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
       }
       else if (Directory.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
-        FileSystemInfo[] contents = new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name).GetFileSystemInfos("*", SearchOption.AllDirectories);
-        long totalSize = 0;
-        foreach (FileSystemInfo item in contents)
-        {
-          switch (item)
-          {
-            case FileInfo fileInfo:
-              totalSize = totalSize + fileInfo.Length;
-              break;
-          }
-        }
-
+        DirectoryInfo dir = new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name);
+        long totalSize = HelperFunctions.GetTotalDirectorySize(dir);
         fileDetails.Size = HelperFunctions.ConvertBytes(totalSize);
       }
 
       trashContents.Add(fileDetails);
-
     }
 
     return trashContents;
@@ -406,18 +417,12 @@ public class Trash
 
     DirectoryInfo trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
     DirectoryInfo trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
-    List<Tuple<FileInfo,FileDetails>> trashContents = new List<Tuple<FileInfo, FileDetails>>();
+    List<Tuple<FileInfo, FileDetails>> trashContents = new List<Tuple<FileInfo, FileDetails>>();
     FileInfo[] trashInfoFiles = trashInfoDir.GetFiles();
     if (trashInfoFiles.Length <= 0)
     {
       return;
     }
-
-
-
-
-
-
 
     foreach (FileInfo infoFile in trashInfoFiles)
     {
@@ -453,11 +458,14 @@ public class Trash
 
       if (File.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
-        fileDetails.Size = HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
+        fileDetails.Size =
+          HelperFunctions.ConvertBytes((new FileInfo(trashFilesDir.FullName + "/" + fileDetails.Name)).Length);
       }
       else if (Directory.Exists(trashFilesDir + "/" + fileDetails.Name))
       {
-        FileSystemInfo[] contents = new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name).GetFileSystemInfos("*", SearchOption.AllDirectories);
+        FileSystemInfo[] contents =
+          new DirectoryInfo(trashFilesDir + "/" + fileDetails.Name).GetFileSystemInfos("*",
+            SearchOption.AllDirectories);
         long totalSize = 0;
         foreach (FileSystemInfo item in contents)
         {
@@ -471,6 +479,7 @@ public class Trash
 
         fileDetails.Size = HelperFunctions.ConvertBytes(totalSize);
       }
+
       Tuple<FileInfo, FileDetails> trashItem = new Tuple<FileInfo, FileDetails>(infoFile, fileDetails);
       trashContents.Add(trashItem);
     }
@@ -486,10 +495,9 @@ public class Trash
       string pattern = file.Replace(@".", @"\.");
       pattern = pattern.Replace("*", @".*");
       Regex starReplace = new Regex($"^{pattern}$");
-      IEnumerable<Tuple<FileInfo,FileDetails>> searchResult = from item in (trashContents)
+      IEnumerable<Tuple<FileInfo, FileDetails>> searchResult = from item in (trashContents)
         where starReplace.IsMatch(item.Item2.Name)
         select item;
-
 
       foreach (Tuple<FileInfo, FileDetails> item in searchResult)
       {
@@ -567,7 +575,8 @@ public class Trash
           }
           catch (Exception e) when (e is PathTooLongException)
           {
-            Console.WriteLine("Error: failed to delete " + item.Item2.Name + " - path exceeds system maximum path length");
+            Console.WriteLine("Error: failed to delete " + item.Item2.Name +
+                              " - path exceeds system maximum path length");
             continue;
           }
           catch (Exception e) when (e is IOException)
@@ -596,8 +605,4 @@ public class Trash
       }
     }
   }
-
 }
-
-
-

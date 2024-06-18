@@ -7,7 +7,6 @@ public class FileDetails
     public string? OriginalPath { get; set; }
     public string? TimeDeleted { get; set; }
 
-
     public FileDetails(string name, string size, string originalPath, string timeDeleted)
     {
         Name = name;
