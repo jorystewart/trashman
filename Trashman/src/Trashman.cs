@@ -14,8 +14,9 @@ namespace Trashman
       Command emptyCommand = new Command(name: "empty", description: "Permanently delete all files in trash");
       Command purgeCommand = new Command(name: "purge", description: "Permanently delete a file from trash");
 
-      Argument<string> fileArg = new Argument<string>(name: "file", description: "Target file");
-      Argument<string> searchArg = new Argument<string>(name: "file", description: "File name to search for");
+      Argument<List<string>> fileArg = new Argument<List<string>>(name: "file", description: "File(s) to delete");
+      Argument<List<string>> restoreArg = new Argument<List<string>>(name: "file", description: "File(s) to restore");
+      Argument<List<string>> purgeArg = new Argument<List<string>>(name: "file", description: "File(s) to purge");
 
       rootCommand.AddCommand(deleteCommand);
       rootCommand.AddCommand(restoreCommand);
@@ -24,14 +25,30 @@ namespace Trashman
       rootCommand.AddCommand(purgeCommand);
 
       deleteCommand.AddArgument(fileArg);
-      restoreCommand.AddArgument(searchArg);
-      purgeCommand.AddArgument(searchArg);
+      restoreCommand.AddArgument(restoreArg);
+      purgeCommand.AddArgument(purgeArg);
 
-      deleteCommand.SetHandler(DeleteHandler, fileArg);
-      restoreCommand.SetHandler(RestoreHandler, searchArg);
+      deleteCommand.SetHandler((filesToDelete) =>
+      {
+        foreach (string file in filesToDelete)
+        {
+          DeleteHandler(file);
+        }
+      }, fileArg);
+      deleteCommand.AddAlias("d");
+      deleteCommand.AddAlias("D");
+      restoreCommand.SetHandler(RestoreHandler, restoreArg);
+      restoreCommand.AddAlias("r");
+      restoreCommand.AddAlias("R");
       listCommand.SetHandler(ListHandler);
+      listCommand.AddAlias("l");
+      listCommand.AddAlias("L");
       emptyCommand.SetHandler(EmptyHandler);
-      purgeCommand.SetHandler(PurgeHandler, searchArg);
+      emptyCommand.AddAlias("e");
+      emptyCommand.AddAlias("E");
+      purgeCommand.SetHandler(PurgeHandler, purgeArg);
+      purgeCommand.AddAlias("p");
+      purgeCommand.AddAlias("P");
 
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -66,10 +83,12 @@ namespace Trashman
       }
     }
 
-    static void RestoreHandler(string file)
+    static void RestoreHandler(List<string> file)
     {
-      if (file.Contains("**") || file.Contains('/')) { return; }
-
+      if (file.Count < 1)
+      {
+        return;
+      }
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.RestoreFromRecycleBin(file); }
       #endif
@@ -120,15 +139,17 @@ namespace Trashman
       #endif
     }
 
-    static void PurgeHandler(string file)
+    static void PurgeHandler(List<string> file)
     {
-      if (file.Contains("**") || file.Contains('/')) { return; }
-
+      if (file.Count < 1)
+      {
+        return;
+      }
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { RecycleBin.PurgeFromRecycleBin(file); }
       #endif
       #if LINUX
-      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.purgeFromTrash(file);}
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { Trash.PurgeFromTrash(file);}
       #endif
     }
 

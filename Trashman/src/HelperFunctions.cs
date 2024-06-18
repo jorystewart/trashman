@@ -25,7 +25,6 @@ public static class HelperFunctions
     }
   }
 
-
   public static void WriteConsoleTable(List<FileDetails> list)
   {
     int consoleWidth = Console.WindowWidth;
@@ -75,7 +74,6 @@ public static class HelperFunctions
     );
 
     WriteTableInfo(list, columnHeaderInfo);
-
   }
 
   private static void WriteColumnHeaders(Dictionary<string, int> columnsInfo)
@@ -118,7 +116,6 @@ public static class HelperFunctions
 
     builder.Append('+');
     Console.WriteLine(builder.ToString());
-
   }
 
   private static void WriteTableInfo(List<FileDetails> list, Dictionary<string, int> columnData)
@@ -170,7 +167,6 @@ public static class HelperFunctions
     Regex doubleDotMatch = new Regex(@"[\\/].{2}[\\/]"); // contains 2 dots surrounded by forward or back slashes
     Regex tildeMatch = new Regex(@"[\\/]~[\\/]"); // contains a tilde surrounded by forward or back slashes
     Regex doubleDotReplacementTarget = new Regex(@"[^\\/]*[\\/]\.{2}[\\/]");
-
 
     if (!inputPath.Contains('/') && !inputPath.Contains('\\'))
     {
@@ -275,9 +271,22 @@ public static class HelperFunctions
       filePaths.Add(file);
       return filePaths;
     }
-
   }
 
+  public static long GetTotalDirectorySize(DirectoryInfo directory)
+  {
+    long totalSize = 0;
+    foreach (FileSystemInfo subItem in directory.EnumerateFileSystemInfos("*", SearchOption.AllDirectories))
+    {
+      switch (subItem)
+      {
+        case FileInfo subFile:
+          totalSize = totalSize + subFile.Length;
+          break;
+      }
+    }
 
+    return totalSize;
+  }
 
 }
