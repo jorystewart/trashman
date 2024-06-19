@@ -13,7 +13,7 @@ public static partial class RecycleBin
   #region Enums
 
   [Flags]
-  enum RecycleBinFlags: uint
+  enum RecycleBinFlags : uint
   {
     SHERB_NOCONFIRMATION = 0x00000001,
     SHERB_NOPROGRESSUI = 0x00000002,
@@ -36,7 +36,7 @@ public static partial class RecycleBin
 
   #region Shell32.dll Methods
 
-  [LibraryImport("shell32.dll",StringMarshalling = StringMarshalling.Utf16)]
+  [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
   private static partial int SHQueryRecycleBinW(string pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
 
   [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
@@ -73,7 +73,8 @@ public static partial class RecycleBin
       case DirectoryInfo directoryInfo:
         try
         {
-          FileSystem.DeleteDirectory(directoryInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+          FileSystem.DeleteDirectory(directoryInfo.FullName, UIOption.OnlyErrorDialogs,
+            RecycleOption.SendToRecycleBin);
           break;
         }
         catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
@@ -97,7 +98,7 @@ public static partial class RecycleBin
     }
   }
 
-  public static void RestoreFromRecycleBin(string file)
+  public static void RestoreFromRecycleBin(List<string> file)
   {
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
@@ -113,43 +114,48 @@ public static partial class RecycleBin
     }
   }
 
-  private static void RestoreFromRecycleBinSTA(string file)
+  private static void RestoreFromRecycleBinSTA(List<string> filesToRestore)
   {
-    Regex reservedCharacters = new Regex(@"[<>:|?""]+");
-    if (reservedCharacters.IsMatch(file))
-    {
-      Console.WriteLine("Invalid character in input: " + file);
-      return;
-    }
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
-    string pattern = file.Replace(@".", @"\.");
-    pattern = pattern.Replace("*", ".*");
-    Regex starReplace = new Regex($"^{pattern}$");
-    IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
-      where starReplace.IsMatch(item.Name)
-      select item;
-    foreach (FolderItem item in searchResult)
+    Regex reservedCharacters = new Regex(@"[<>:|?""]+");
+
+    foreach (string file in filesToRestore)
     {
-      foreach (FolderItemVerb verb in item.Verbs())
+      if (reservedCharacters.IsMatch(file))
       {
-        if (verb.Name.Contains("Restore") || (verb.Name.Contains("R&estore")))
+        Console.WriteLine("Invalid character in input: " + file);
+        continue;
+      }
+
+      string pattern = file.Replace(@".", @"\.");
+      pattern = pattern.Replace("*", ".*");
+      Regex starReplace = new Regex($"^{pattern}$");
+      IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
+        where starReplace.IsMatch(item.Name)
+        select item;
+      foreach (FolderItem result in searchResult)
+      {
+        foreach (FolderItemVerb verb in result.Verbs())
         {
-          try
+          if (verb.Name.Contains("Restore") || (verb.Name.Contains("R&estore")))
           {
-            verb.DoIt();
-          }
-          catch (Exception e)
-          {
-            Console.WriteLine("Failed to restore " + item.Name + ":" + e.Message);
+            try
+            {
+              verb.DoIt();
+            }
+            catch (Exception e)
+            {
+              Console.WriteLine("Failed to restore " + result.Name + ":" + e.Message);
+            }
           }
         }
       }
     }
   }
 
-  private static Tuple<long,long> GetRecycleBinContentInfo()
+  private static Tuple<long, long> GetRecycleBinContentInfo()
   {
     SHQUERYRBINFO recycleBinQueryInfo = new SHQUERYRBINFO();
     recycleBinQueryInfo.cbSize = Marshal.SizeOf(typeof(SHQUERYRBINFO));
@@ -208,11 +214,12 @@ public static partial class RecycleBin
   public static void EmptyRecycleBinContents()
   {
     uint flags = (uint)(RecycleBinFlags.SHERB_NOCONFIRMATION | RecycleBinFlags.SHERB_NOPROGRESSUI |
-                  RecycleBinFlags.SHERB_NOSOUND);
-    Tuple<long,long> recycleBinContentInfo = GetRecycleBinContentInfo();
+                        RecycleBinFlags.SHERB_NOSOUND);
+    Tuple<long, long> recycleBinContentInfo = GetRecycleBinContentInfo();
     if (recycleBinContentInfo.Item1 != 0)
     {
-      Console.WriteLine(recycleBinContentInfo.Item1 + " items found in Recycle Bin (" + HelperFunctions.ConvertBytes(recycleBinContentInfo.Item2) + ")");
+      Console.WriteLine(recycleBinContentInfo.Item1 + " items found in Recycle Bin (" +
+                        HelperFunctions.ConvertBytes(recycleBinContentInfo.Item2) + ")");
       Console.WriteLine("Confirm deletion? Y/(N)");
       ConsoleKeyInfo confirmKey = Console.ReadKey(true);
       if (confirmKey.Key == ConsoleKey.Y)
@@ -234,7 +241,7 @@ public static partial class RecycleBin
     }
   }
 
-  public static void PurgeFromRecycleBin(string file)
+  public static void PurgeFromRecycleBin(List<string> file)
   {
     if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
     {
@@ -250,94 +257,99 @@ public static partial class RecycleBin
     }
   }
 
-  private static void PurgeFromRecycleBinSTA(string file)
+  private static void PurgeFromRecycleBinSTA(List<string> filesToPurge)
   {
     Regex reservedCharacters = new Regex(@"[<>:|?""]+");
-    if (reservedCharacters.IsMatch(file))
-    {
-      Console.WriteLine("Invalid character in input" + file);
-      return;
-    }
     Shell shell = new Shell();
     Folder recycleBinFolder = shell.NameSpace(10);
     FolderItems recycleBinItems = recycleBinFolder.Items();
-    string pattern = file.Replace(@"\", @"\\");
-    pattern = pattern.Replace(@".", @"\.");
-    pattern = pattern.Replace("*", ".*");
 
-    Regex starReplace = new Regex($"^(?i){pattern}$");
-    IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
-      where starReplace.IsMatch(item.Name)
-      select item;
-
-    if (!searchResult.Any())
+    foreach (string file in filesToPurge)
     {
-      Console.WriteLine("No results for " + file + " in Recycle Bin.");
-    }
-    foreach (FolderItem item in searchResult)
-    {
-      if (item.IsFileSystem == false)
+      if (reservedCharacters.IsMatch(file))
       {
-        Console.WriteLine("Error: " + item.Name + " is not a normal filesystem object. Ignoring.");
+        Console.WriteLine("Invalid character in input" + file);
         continue;
       }
 
-      if (item.IsFolder)
+      string pattern = file.Replace(@"\", @"\\");
+      pattern = pattern.Replace(@".", @"\.");
+      pattern = pattern.Replace("*", ".*");
+      Regex starReplace = new Regex($"^(?i){pattern}$");
+      IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
+        where starReplace.IsMatch(item.Name)
+        select item;
+      if (!searchResult.Any())
       {
-        try
-        {
-          Directory.Delete(item.Path, true);
-        }
-        catch (Exception e) when (e is ArgumentNullException or ArgumentException)
-        {
-          Console.WriteLine("Error: path is null or empty, or includes invalid characters");
-        }
-        catch (Exception e) when (e is IOException)
-        {
-          Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
-        }
-        catch (Exception e) when (e is PathTooLongException)
-        {
-          Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-        }
-        catch (Exception e) when (e is UnauthorizedAccessException)
-        {
-          Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-        }
-        catch (Exception e) when (e is DirectoryNotFoundException)
-        {
-          Console.WriteLine("Error: " + item.Path + " was not found");
-        }
-        catch (Exception e)
-        {
-          Console.WriteLine("Error: " + e);
-        }
+        Console.WriteLine("No results for " + file + " in Recycle Bin.");
+        continue;
       }
-      else
+
+      foreach (FolderItem item in searchResult)
       {
-        try
+        if (item.IsFileSystem == false)
         {
-          File.Delete(item.Path);
+          Console.WriteLine("Error: " + item.Name + " is not a normal filesystem object. Ignoring.");
+          continue;
         }
-        catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+
+        if (item.IsFolder)
         {
-          Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+          try
+          {
+            Directory.Delete(item.Path, true);
+          }
+          catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+          {
+            Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+          }
+          catch (Exception e) when (e is IOException)
+          {
+            Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it in use?");
+          }
+          catch (Exception e) when (e is PathTooLongException)
+          {
+            Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+          }
+          catch (Exception e) when (e is UnauthorizedAccessException)
+          {
+            Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+          }
+          catch (Exception e) when (e is DirectoryNotFoundException)
+          {
+            Console.WriteLine("Error: " + item.Path + " was not found");
+          }
+          catch (Exception e)
+          {
+            Console.WriteLine("Error: " + e);
+          }
         }
-        catch (Exception e) when (e is IOException)
+        else
         {
-          Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
-        }
-        catch (Exception e) when (e is NotSupportedException or PathTooLongException)
-        {
-          Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
-        }
-        catch (Exception e) when (e is UnauthorizedAccessException)
-        {
-          Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
-        }
-        catch (Exception e)
-        {
-          Console.WriteLine("Error: " + e);
+          try
+          {
+            File.Delete(item.Path);
+          }
+          catch (Exception e) when (e is ArgumentNullException or ArgumentException)
+          {
+            Console.WriteLine("Error: path is null or empty, or includes invalid characters");
+          }
+          catch (Exception e) when (e is IOException)
+          {
+            Console.WriteLine("Error: " + item.Name + " cannot be deleted, is it open?");
+          }
+          catch (Exception e) when (e is NotSupportedException or PathTooLongException)
+          {
+            Console.WriteLine("Error: " + item.Path + " is invalid or exceeds the maximum path length");
+          }
+          catch (Exception e) when (e is UnauthorizedAccessException)
+          {
+            Console.WriteLine("Error: Permissions error, cannot delete " + item.Name);
+          }
+          catch (Exception e)
+          {
+            Console.WriteLine("Error: " + e);
+          }
         }
       }
     }
