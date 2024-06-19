@@ -28,11 +28,9 @@ It supports the wildcard character `*`
 
 
 * Windows implementation:
-  - [ ] Tab completion for trasher restore and trasher purge  
-  - [ ] Multi-token processing for delete, restore, and purge
+  - [ ] Tab completion for trasher restore and trasher purge
 
 * Linux implementation:
-  - [ ]  Exception detection and handling
   - [ ]  Tab completion
   - [ ]  Nix packaging
 
