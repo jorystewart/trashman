@@ -7,19 +7,32 @@
 
   outputs = { nixpkgs, self }:
   {
-    defaultPackage.x86_64-linux = with nixpkgs.legacyPackages.x86_64-linux; stdenv.mkDerivation {
-      name = "trashman";
+    system = "x86_64-linux";
+    pkgs = import nixpkgs { inherit system; };
+    dotnetProgram = pkgs.buildDotnetModule rec {
+      pname = "trashman";
+      version = "0.1";
       buildInputs = [ dotnet-sdk_8 ];
 
-      buildPhase = ''
-        dotnet restore
-        dotnet build --configuration Release --no-restore trashman.csproj
-      '';
+      src = pkgs.fetchFromGitHub {
+        owner = "jorystewart";
+        repo = pname;
+        rev = "v${version}";
+        sha256 = "";
+      };
 
-      installPhase = ''
-        mkdir -p $out/bin
-        dotnet publish --configuration Release --no-build --output $out/bin
-      '';
+      projectFile = "Trashman/trashman.csproj";
+
+      nugetDeps = # TODO
+
+      meta = with pkgs.lib; {
+        homepage = "some_homepage";
+        description = "some_description";
+        license = licenses.mit;
+      };
     };
+  in
+  {
+    packages.${system}.dotnetProgram = dotnetProgram;
   };
 }

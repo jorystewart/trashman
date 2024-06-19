@@ -34,6 +34,7 @@ It supports the wildcard character `*`
 * Linux implementation:
   - [ ]  Exception detection and handling
   - [ ]  Tab completion
+  - [ ]  Nix packaging
 
 * General:
   - [ ]  Write unit tests
