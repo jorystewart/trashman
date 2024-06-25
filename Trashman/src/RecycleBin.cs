@@ -55,7 +55,13 @@ public static partial class RecycleBin
           FileSystem.DeleteFile(fileInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
           break;
         }
-        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+        catch (Exception e) when (e is ArgumentException or ArgumentNullException or NotSupportedException
+                                    or PathTooLongException)
+        {
+          Console.WriteLine("Path " + fileInfo.FullName + " does not exist or is an invalid path");
+          break;
+        }
+        catch (Exception e) when (e is FileNotFoundException)
         {
           Console.WriteLine("Not found: " + fileInfo.FullName);
           break;
@@ -65,11 +71,17 @@ public static partial class RecycleBin
           Console.WriteLine("Permissions error, cannot delete " + fileInfo.FullName);
           break;
         }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Unable to delete " + fileInfo.FullName + " - file is in use by another process");
+          break;
+        }
         catch (Exception e)
         {
           Console.WriteLine("Error: " + e);
           break;
         }
+
       case DirectoryInfo directoryInfo:
         try
         {
@@ -77,7 +89,13 @@ public static partial class RecycleBin
             RecycleOption.SendToRecycleBin);
           break;
         }
-        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+        catch (Exception e) when (e is ArgumentException or ArgumentNullException or NotSupportedException
+                                    or PathTooLongException)
+        {
+          Console.WriteLine("Path " + directoryInfo.FullName + " does not exist or is an invalid path");
+          break;
+        }
+        catch (Exception e) when (e is DirectoryNotFoundException)
         {
           Console.WriteLine("Not found: " + directoryInfo.FullName);
           break;
@@ -85,6 +103,11 @@ public static partial class RecycleBin
         catch (Exception e) when (e is SecurityException or UnauthorizedAccessException)
         {
           Console.WriteLine("Insufficient permissions, cannot delete " + directoryInfo.FullName);
+          break;
+        }
+        catch (Exception e) when (e is IOException)
+        {
+          Console.WriteLine("Unable to delete " + directoryInfo.FullName + " - directory or subdirectory is in use by another process");
           break;
         }
         catch (Exception e)
