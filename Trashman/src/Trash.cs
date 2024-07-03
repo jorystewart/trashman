@@ -11,6 +11,32 @@ public class Trash
       ? Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash"
       : Environment.GetEnvironmentVariable("XDG_DATA_HOME") + "/Trash";
 
+  private static readonly string[] _protectedPaths = new[]
+  {
+    "/",
+    "/bin",
+    "/boot",
+    "/dev",
+    "/etc",
+    "/home",
+    "/lib",
+    "/lib64",
+    "/lost+found",
+    "/media",
+    "/mnt",
+    "/opt",
+    "/proc",
+    "/root",
+    "/run",
+    "/sbin",
+    "/srv",
+    "/sys",
+    "/tmp",
+    "/usr",
+    "/var",
+    "/nix"
+  };
+
   private static void TestTrashDirectories()
   {
     if (!Directory.Exists(_trashLocation))
@@ -31,6 +57,12 @@ public class Trash
 
   public static void SendToTrash(FileSystemInfo file)
   {
+    if (_protectedPaths.Contains(file.FullName))
+    {
+      Console.WriteLine("Error: cannot trash protected system files.");
+      return;
+    }
+
     TestTrashDirectories();
 
     string trashFileName;

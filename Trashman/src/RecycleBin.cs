@@ -44,9 +44,30 @@ public static partial class RecycleBin
 
   #endregion
 
+  private static readonly string[] _protectedPaths = new[]
+  {
+    Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+    Environment.GetFolderPath(Environment.SpecialFolder.System),
+    Environment.GetFolderPath(Environment.SpecialFolder.SystemX86),
+    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles),
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86),
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu),
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup),
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory),
+    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+  };
 
   public static void SendToRecycleBin(FileSystemInfo file)
   {
+    if (_protectedPaths.Contains(file.FullName))
+    {
+      Console.WriteLine("Error: " + file.FullName + " is a protected system path");
+      return;
+    }
+
     switch (file)
     {
       case FileInfo fileInfo:
@@ -156,8 +177,8 @@ public static partial class RecycleBin
       pattern = pattern.Replace("*", ".*");
       Regex starReplace = new Regex($"^{pattern}$");
       IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
-        where starReplace.IsMatch(item.Name)
-        select item;
+                                             where starReplace.IsMatch(item.Name)
+                                             select item;
       foreach (FolderItem result in searchResult)
       {
         foreach (FolderItemVerb verb in result.Verbs())
@@ -300,8 +321,8 @@ public static partial class RecycleBin
       pattern = pattern.Replace("*", ".*");
       Regex starReplace = new Regex($"^(?i){pattern}$");
       IEnumerable<FolderItem> searchResult = from item in (recycleBinItems.Cast<FolderItem>())
-        where starReplace.IsMatch(item.Name)
-        select item;
+                                             where starReplace.IsMatch(item.Name)
+                                             select item;
       if (!searchResult.Any())
       {
         Console.WriteLine("No results for " + file + " in Recycle Bin.");
