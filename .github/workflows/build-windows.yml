@@ -27,9 +27,9 @@ jobs:
     - name: restore
       run: dotnet restore
     - name: Build Single-File Release
-      run: MSBuild.exe .\Trashman\trashman.csproj @.\build\win-x64-singlefile.rsp
+      run: MSBuild.exe .\Trashman\trashman.csproj @build\win-x64-singlefile.rsp
     - name: Build Single-File Self-Contained
-      run: MSBuild.exe .\Trashman\trashman.csproj @.\build\win-x64-singlefile-selfcontained.rsp
+      run: MSBuild.exe .\Trashman\trashman.csproj @build\win-x64-singlefile-selfcontained.rsp
     - name: Upload win-x64 artifact
       uses: actions/upload-artifact@v4
       with:
