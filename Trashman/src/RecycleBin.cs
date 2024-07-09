@@ -76,8 +76,7 @@ public static partial class RecycleBin
           FileSystem.DeleteFile(fileInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
           break;
         }
-        catch (Exception e) when (e is ArgumentException or ArgumentNullException or NotSupportedException
-                                    or PathTooLongException)
+        catch (Exception e) when (e is ArgumentException or ArgumentNullException or NotSupportedException or PathTooLongException)
         {
           Console.WriteLine("Path " + fileInfo.FullName + " does not exist or is an invalid path");
           break;
@@ -106,12 +105,10 @@ public static partial class RecycleBin
       case DirectoryInfo directoryInfo:
         try
         {
-          FileSystem.DeleteDirectory(directoryInfo.FullName, UIOption.OnlyErrorDialogs,
-            RecycleOption.SendToRecycleBin);
+          FileSystem.DeleteDirectory(directoryInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
           break;
         }
-        catch (Exception e) when (e is ArgumentException or ArgumentNullException or NotSupportedException
-                                    or PathTooLongException)
+        catch (Exception e) when (e is ArgumentException or ArgumentNullException or NotSupportedException or PathTooLongException)
         {
           Console.WriteLine("Path " + directoryInfo.FullName + " does not exist or is an invalid path");
           break;
