@@ -9,12 +9,12 @@
 -property:IncludeAllContentForSelfExtract=false
 -property:Configuration=Release
 -property:Platform=AnyCPU
--property:PublishDir=.\out\net8.0\win-x64\publish
+-property:PublishDir=out\net8.0\win-x64\publish
 -property:SolutionExt=.sln
 -property:SolutionName=trashman
 -property:SolutionFileName=trashman.sln
 -property:SolutionPath=.\trashman.sln
 -property:SolutionDir=.
--property:OutDir=.\out\net8.0\win-x64
+-property:OutDir=out\net8.0\win-x64
 -t:Publish
 -m
