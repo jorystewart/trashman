@@ -7,5 +7,6 @@ Trashman.Tests/bin
 Trashman.Tests/obj
 Trashman/bin/
 Trashman/obj/
-Trashman.Tests/Trashman.Tests.csproj.DotSettings
+Trashman/out/
+Trashman.Tests/
 qodana.yaml
