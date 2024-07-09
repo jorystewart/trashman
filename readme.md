@@ -20,17 +20,3 @@ It supports the wildcard character `*`
 It supports the wildcard character `*`
 
 `trashman empty` permanently deletes all files and directories in Recycle Bin/Trash.
-
----
-
-<details>
-<summary>Todo</summary>
-
-* Linux implementation:
-  - [ ]  Nix packaging
-
-* General:
-  - [ ]  Write unit tests
-  - [ ]  GitHub Actions?
-
-</details>
