@@ -4,7 +4,7 @@
         <OutputType>Exe</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Release Single-File</Configurations>
+        <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <TargetFramework>net8.0</TargetFramework>
@@ -19,6 +19,7 @@
 
     <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
         <Compile Remove="src/Trash.cs" />
+        <Compile Remove="out\**" />
     </ItemGroup>
     <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
         <Compile Remove="src/RecycleBin.cs" />
@@ -43,6 +44,14 @@
         <Isolated>false</Isolated>
         <EmbedInteropTypes>true</EmbedInteropTypes>
       </COMReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="out\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="out\**" />
     </ItemGroup>
 
 </Project>
