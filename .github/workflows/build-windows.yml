@@ -35,9 +35,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: trashman-win-x64.exe
-        path: .\out\net8.0\win-x64\publish\trashman.exe
+        path: .\Trashman\out\net8.0\win-x64\publish\trashman.exe
     - name: Upload win-x64-selfcontained artifact
       uses: actions/upload-artifact@v4
       with:
         name: trashman-win-x64-selfcontained.exe
-        path: .\out\net8.0\win-x64-selfcontained\publish\trashman.exe
+        path: .\Trashman\out\net8.0\win-x64-selfcontained\publish\trashman.exe
