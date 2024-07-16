@@ -10,3 +10,5 @@ Trashman/obj/
 Trashman/out/
 Trashman.Tests/
 qodana.yaml
+*/out/
+*/obj/
