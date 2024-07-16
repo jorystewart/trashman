@@ -99,7 +99,7 @@ public class Trash
         if (File.Exists(_trashLocation + "/files/" + trashFileName))
         {
           int counter = 0;
-          while (Directory.Exists(_trashLocation + "/files/" + trashFileName))
+          while (File.Exists(_trashLocation + "/files/" + trashFileName))
           {
             trashFileName = trashFileName + counter.ToString();
           }

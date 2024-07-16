@@ -20,7 +20,6 @@
 
     <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
         <Compile Remove="src/Trash.cs" />
-        <Compile Remove="out\**" />
     </ItemGroup>
     <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
         <Compile Remove="src/RecycleBin.cs" />
