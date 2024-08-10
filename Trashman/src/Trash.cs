@@ -699,6 +699,7 @@ public class Trash
     ConsoleKeyInfo confirmKey = Console.ReadKey(true);
     if (confirmKey.Key == ConsoleKey.Y)
     {
+      Console.WriteLine("Deleting...")
       foreach (FileSystemInfo item in trashFilesDir.EnumerateFileSystemInfos())
       {
         switch (item)
