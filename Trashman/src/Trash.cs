@@ -699,7 +699,7 @@ public class Trash
     ConsoleKeyInfo confirmKey = Console.ReadKey(true);
     if (confirmKey.Key == ConsoleKey.Y)
     {
-      Console.WriteLine("Deleting...")
+      Console.WriteLine("Deleting...");
       foreach (FileSystemInfo item in trashFilesDir.EnumerateFileSystemInfos())
       {
         switch (item)
@@ -906,6 +906,19 @@ public class Trash
         {
           try
           {
+            UnixFileMode mode = File.GetUnixFileMode(trashFilesDir + "/" + item.Item2.Name);
+            if ((mode & UnixFileMode.UserWrite) != UnixFileMode.UserWrite)
+            {
+              try
+              {
+                File.SetUnixFileMode(trashFilesDir + "/" + item.Item2.Name, UnixFileMode.UserWrite);
+              }
+              catch
+              {
+                Console.WriteLine("File " + item.Item2.Name + " lacks the user write flag. Attempting to set it failed. Skipping...");
+                continue;
+              }
+            }
             File.Delete(trashFilesDir + "/" + item.Item2.Name);
           }
           catch (Exception e) when (e is ArgumentException or ArgumentNullException)
