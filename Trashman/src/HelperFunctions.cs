@@ -137,8 +137,17 @@ public static class HelperFunctions
 
           if (result)
           {
-            int rightPadding = keyValue - property.GetValue(item).ToString().Length - 1;
-            builder.Append(' ', rightPadding);
+            if (property.GetValue(item) != null)
+            {
+              int rightPadding = keyValue - property.GetValue(item).ToString().Length - 1;
+              builder.Append(' ', rightPadding);
+            }
+            else
+            {
+              int rightPadding = keyValue - 4;
+              builder.Append("0 B");
+              builder.Append(' ', rightPadding);
+            }
           }
         }
       }
