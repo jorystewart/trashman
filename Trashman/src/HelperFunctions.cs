@@ -163,9 +163,9 @@ public static class HelperFunctions
     Regex leadingDotMatch = new Regex(@"^\.[\\/]"); // starts with ./ or .\
     Regex leadingDoubleDotMatch = new Regex(@"^\.{2}[\\/]"); // starts with ../ or ..\
     Regex leadingTildeMatch = new Regex(@"^~[\\/]"); // starts with ~/ or ~\
-    Regex dotMatch = new Regex(@"[\\/]\.[\\/]"); // contains a dot surrounded by forward or back slashes
-    Regex doubleDotMatch = new Regex(@"[\\/].{2}[\\/]"); // contains 2 dots surrounded by forward or back slashes
-    Regex tildeMatch = new Regex(@"[\\/]~[\\/]"); // contains a tilde surrounded by forward or back slashes
+    Regex dotMatch = new Regex(@"[\\/]\.[\\/]"); // contains a dot surrounded by forward or backslashes
+    Regex doubleDotMatch = new Regex(@"[\\/].{2}[\\/]"); // contains 2 dots surrounded by forward or backslashes
+    Regex tildeMatch = new Regex(@"[\\/]~[\\/]"); // contains a tilde surrounded by forward or backslashes
     Regex doubleDotReplacementTarget = new Regex(@"[^\\/]*[\\/]\.{2}[\\/]");
 
     if (!inputPath.Contains('/') && !inputPath.Contains('\\'))
