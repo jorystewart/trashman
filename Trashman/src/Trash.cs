@@ -5,7 +5,9 @@ namespace Trashman;
 
 public class Trash
 {
-  private static string _trashLocation = (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) || Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null)
+  private static string _trashLocation =
+    (Environment.GetEnvironmentVariable("XDG_DATA_HOME") == (String.Empty) ||
+     Environment.GetEnvironmentVariable("XDG_DATA_HOME") == null)
       ? Environment.GetEnvironmentVariable("HOME") + "/.local/share/Trash"
       : Environment.GetEnvironmentVariable("XDG_DATA_HOME") + "/Trash";
 
@@ -77,7 +79,40 @@ public class Trash
     }
   }
 
-  public static void SendToTrash(FileSystemInfo file)
+  private static void ValidateTrashConsistency()
+  {
+
+    DirectoryInfo trashInfoDir;
+    DirectoryInfo trashFilesDir;
+
+    try
+    {
+      trashInfoDir = new DirectoryInfo(_trashLocation + "/info");
+      trashFilesDir = new DirectoryInfo(_trashLocation + "/files");
+    }
+    catch (Exception e) when (e is ArgumentException or ArgumentNullException)
+    {
+      Console.Error.WriteLine("Unable to obtain handle of trash directories - path is null or invalid");
+      return;
+    }
+    catch (Exception e) when (e is SecurityException)
+    {
+      Console.Error.WriteLine("Unable to obtain handle of trash directories - insufficient permissions");
+      return;
+    }
+    catch (Exception e) when (e is PathTooLongException)
+    {
+      Console.Error.WriteLine("Unable to obtain handle of trash directories - path exceeds system maximum path length");
+      return;
+    }
+
+
+
+  }
+
+
+
+public static void SendToTrash(FileSystemInfo file)
   {
     if (_protectedPaths.Contains(file.FullName))
     {
@@ -699,6 +734,7 @@ public class Trash
     ConsoleKeyInfo confirmKey = Console.ReadKey(true);
     if (confirmKey.Key == ConsoleKey.Y)
     {
+      Console.WriteLine("Deleting...");
       foreach (FileSystemInfo item in trashFilesDir.EnumerateFileSystemInfos())
       {
         switch (item)
@@ -905,6 +941,19 @@ public class Trash
         {
           try
           {
+            UnixFileMode mode = File.GetUnixFileMode(trashFilesDir + "/" + item.Item2.Name);
+            if ((mode & UnixFileMode.UserWrite) != UnixFileMode.UserWrite)
+            {
+              try
+              {
+                File.SetUnixFileMode(trashFilesDir + "/" + item.Item2.Name, UnixFileMode.UserWrite);
+              }
+              catch
+              {
+                Console.WriteLine("File " + item.Item2.Name + " lacks the user write flag. Attempting to set it failed. Skipping...");
+                continue;
+              }
+            }
             File.Delete(trashFilesDir + "/" + item.Item2.Name);
           }
           catch (Exception e) when (e is ArgumentException or ArgumentNullException)
@@ -1001,6 +1050,18 @@ public class Trash
           {
             Console.Error.WriteLine("Error: failed to clean " + item.Item1.Name + " - IOException");
             continue;
+          }
+        }
+
+        else
+        {
+          try
+          {
+            File.Delete(item.Item1.FullName);
+          }
+          catch
+          {
+            Console.WriteLine("File " + item.Item1.Name + " does not correspond to a file in trash. Failed to delete orphan .info");
           }
         }
       }

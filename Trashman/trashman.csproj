@@ -9,6 +9,7 @@
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <TargetFramework>net8.0</TargetFramework>
         <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+        <Version>1.2.0</Version>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">

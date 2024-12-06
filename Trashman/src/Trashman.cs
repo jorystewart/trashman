@@ -10,11 +10,12 @@ namespace Trashman
       RootCommand rootCommand = new RootCommand("CLI trash/recycle bin management tool");
       Command deleteCommand = new Command(name: "delete", description: "Move a file to trash");
       Command restoreCommand = new Command(name: "restore", description: "Restore a file from trash");
-      Command listCommand = new Command(name: "list", description: "List files currently in trash");
+      Command listCommand = new Command(name: "list", description: "List/search files currently in trash");
       Command emptyCommand = new Command(name: "empty", description: "Permanently delete all files in trash");
       Command purgeCommand = new Command(name: "purge", description: "Permanently delete a file from trash");
 
       Argument<List<string>> fileArg = new Argument<List<string>>(name: "file", description: "File(s) to delete");
+      Argument<string>? searchArg = new Argument<string>(name: "search", description: "String to search for", getDefaultValue: () => string.Empty);
       Argument<List<string>> restoreArg = new Argument<List<string>>(name: "file", description: "File(s) to restore");
       Argument<List<string>> purgeArg = new Argument<List<string>>(name: "file", description: "File(s) to purge");
 
@@ -25,6 +26,7 @@ namespace Trashman
       rootCommand.AddCommand(purgeCommand);
 
       deleteCommand.AddArgument(fileArg);
+      listCommand.AddArgument(searchArg);
       restoreCommand.AddArgument(restoreArg);
       purgeCommand.AddArgument(purgeArg);
 
@@ -40,7 +42,7 @@ namespace Trashman
       restoreCommand.SetHandler(RestoreHandler, restoreArg);
       restoreCommand.AddAlias("r");
       restoreCommand.AddAlias("R");
-      listCommand.SetHandler(ListHandler);
+      listCommand.SetHandler(ListHandler, searchArg);
       listCommand.AddAlias("l");
       listCommand.AddAlias("L");
       emptyCommand.SetHandler(EmptyHandler);
@@ -97,19 +99,30 @@ namespace Trashman
       #endif
     }
 
-    static void ListHandler()
+    static void ListHandler(string? search)
     {
       #if WINDOWS
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
       {
         List<FileDetails> itemsList = RecycleBin.GetRecycleBinItems();
-        if (itemsList.Count > 0)
+        if (itemsList.Count <= 0)
+        {
+          Console.WriteLine("Trash is empty");
+          return;
+        }
+        if (search == String.Empty)
         {
           HelperFunctions.WriteConsoleTable(itemsList);
         }
         else
         {
-          Console.WriteLine("Trash is empty.");
+          IEnumerable<FileDetails> filteredList = from item in itemsList
+                                                  where item.Name.Contains(search, StringComparison.InvariantCultureIgnoreCase)
+                                                  select item;
+          if (filteredList.Any())
+          {
+            HelperFunctions.WriteConsoleTable(filteredList.ToList());
+          }
         }
       }
       #endif
@@ -117,13 +130,24 @@ namespace Trashman
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
       {
         List<FileDetails> itemsList = Trash.GetTrashContents();
-        if (itemsList.Count > 0)
+        if (itemsList.Count <= 0)
+        {
+          Console.WriteLine("Trash is empty");
+          return;
+        }
+        if (search == String.Empty)
         {
           HelperFunctions.WriteConsoleTable(itemsList);
         }
         else
         {
-          Console.WriteLine("Trash is empty.");
+          IEnumerable<FileDetails> filteredList = from item in itemsList
+                                                  where item.Name.Contains(search, StringComparison.InvariantCultureIgnoreCase)
+                                                  select item;
+          if (filteredList.Any())
+          {
+            HelperFunctions.WriteConsoleTable(filteredList.ToList());
+          }
         }
       }
       #endif

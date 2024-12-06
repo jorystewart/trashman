@@ -259,6 +259,7 @@ public static partial class RecycleBin
       ConsoleKeyInfo confirmKey = Console.ReadKey(true);
       if (confirmKey.Key == ConsoleKey.Y)
       {
+        Console.WriteLine("Deleting...");
         int hResult = SHEmptyRecycleBinW(IntPtr.Zero, String.Empty, flags);
         if (hResult == 0)
         {

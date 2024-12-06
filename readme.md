@@ -15,6 +15,7 @@ It is recursive by default.
 It supports the wildcard character `*`
 
 `trashman list` lists all files and directories currently in Recycle Bin/Trash.
+It also supports searching.
 
 `trashman purge` permanently deletes files and/or directories in Recycle Bin/Trash. 
 It supports the wildcard character `*`
