@@ -25,11 +25,60 @@ public static class HelperFunctions
     }
   }
 
+  public static int ContainsFullWidthCharacters(string text)
+  {
+    int fullWidthCharacterCount = 0;
+
+    foreach (char c in text)
+    {
+      int codePoint = (int)c;
+      if ((codePoint >= 0xFF01 && codePoint <= 0xFF5E) || // full width ASCII variants
+          (codePoint >= 0xFFE0 && codePoint <= 0xFFFF) || // full width symbols
+          //(codePoint >= 0x31F0 && codePoint <= 0x31FF) ||
+          //(codePoint >= 0x3220 && codePoint <= 0x3243) ||
+          //(codePoint >= 0x3280 && codePoint <= 0x337F) ||
+          (codePoint >= 0x3000 && codePoint <= 0x303F) || // Japanese symbols & punctuation
+          (codePoint >= 0x3041 && codePoint <= 0x3096) || // full width hiragana
+          (codePoint >= 0x30A0 && codePoint <= 0x30FF) || // full width katakana
+          (codePoint >= 0x3400 && codePoint <= 0x4DB5) || // kanji block 1
+          (codePoint >= 0x4E00 && codePoint <= 0x9FCB) || // kanji block 2
+          (codePoint >= 0xF900 && codePoint <= 0xFA6A) || // kanji block 3
+          (codePoint >= 0x2E80 && codePoint <= 0x2FD5))   // kanji radicals block
+      {
+        fullWidthCharacterCount++;
+      }
+    }
+    return fullWidthCharacterCount;
+  }
+
   public static void WriteConsoleTable(List<FileDetails> list)
   {
     int consoleWidth = Console.WindowWidth;
 
     int nameColumnWidth = list.Max(r => r.Name.Length) + 2;
+
+    IEnumerable<FileDetails> fullWidthNames = from file in list where (ContainsFullWidthCharacters(file.Name) >= 1) select file;
+      //(List<FileDetails>)from file in list where (file.Name.Normalize(NormalizationForm.FormKC) != file.Name) select file;
+
+
+    if (fullWidthNames.Any())
+    {
+      int maxFullWidthName = 0;
+      foreach (FileDetails file in fullWidthNames)
+      {
+        int length = file.Name.Length + ContainsFullWidthCharacters(file.Name);
+        if (length > maxFullWidthName)
+        {
+          maxFullWidthName = length;
+        }
+      }
+
+      if (maxFullWidthName > nameColumnWidth)
+      {
+        nameColumnWidth = maxFullWidthName;
+      }
+    }
+
     string nameColumnHeader = "Name";
     if (nameColumnWidth < nameColumnHeader.Length) { nameColumnWidth = nameColumnHeader.Length + 2; }
 
@@ -137,15 +186,23 @@ public static class HelperFunctions
 
           if (result)
           {
-            if (property.GetValue(item) != null)
+            if (property.GetValue(item).ToString().Length >= 1)
             {
               int rightPadding = keyValue - property.GetValue(item).ToString().Length - 1;
+              int fullWidthCharacterCount = ContainsFullWidthCharacters(property.GetValue(item).ToString());
+              if (fullWidthCharacterCount >= 0)
+              {
+                rightPadding = rightPadding - fullWidthCharacterCount;
+              }
               builder.Append(' ', rightPadding);
             }
             else
             {
               int rightPadding = keyValue - 4;
-              builder.Append("0 B");
+              if (property.Name == "Size")
+              {
+                builder.Append("0 B");
+              }
               builder.Append(' ', rightPadding);
             }
           }
@@ -172,9 +229,9 @@ public static class HelperFunctions
     Regex leadingDotMatch = new Regex(@"^\.[\\/]"); // starts with ./ or .\
     Regex leadingDoubleDotMatch = new Regex(@"^\.{2}[\\/]"); // starts with ../ or ..\
     Regex leadingTildeMatch = new Regex(@"^~[\\/]"); // starts with ~/ or ~\
-    Regex dotMatch = new Regex(@"[\\/]\.[\\/]"); // contains a dot surrounded by forward or backslashes
-    Regex doubleDotMatch = new Regex(@"[\\/].{2}[\\/]"); // contains 2 dots surrounded by forward or backslashes
-    Regex tildeMatch = new Regex(@"[\\/]~[\\/]"); // contains a tilde surrounded by forward or backslashes
+    Regex dotMatch = new Regex(@"[\\/]\.[\\/]"); // contains a dot surrounded by forward or back slashes
+    Regex doubleDotMatch = new Regex(@"[\\/].{2}[\\/]"); // contains 2 dots surrounded by forward or back slashes
+    Regex tildeMatch = new Regex(@"[\\/]~[\\/]"); // contains a tilde surrounded by forward or back slashes
     Regex doubleDotReplacementTarget = new Regex(@"[^\\/]*[\\/]\.{2}[\\/]");
 
     if (!inputPath.Contains('/') && !inputPath.Contains('\\'))
