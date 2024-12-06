@@ -186,13 +186,26 @@ public static class HelperFunctions
 
           if (result)
           {
-            int rightPadding = keyValue - property.GetValue(item).ToString().Length - 1;
-            int fullWidthCharacterCount = ContainsFullWidthCharacters(property.GetValue(item).ToString());
-            if (fullWidthCharacterCount >= 0)
+            if (property.GetValue(item).ToString().Length >= 1)
             {
-              rightPadding = rightPadding - fullWidthCharacterCount;
+              int rightPadding = keyValue - property.GetValue(item).ToString().Length - 1;
+              int fullWidthCharacterCount = ContainsFullWidthCharacters(property.GetValue(item).ToString());
+              if (fullWidthCharacterCount >= 0)
+              {
+                rightPadding = rightPadding - fullWidthCharacterCount;
+              }
+              builder.Append(' ', rightPadding);
             }
-            builder.Append(' ', rightPadding);
+            else
+            {
+              int rightPadding = keyValue - 4;
+              if (property.Name == "Size")
+              {
+                builder.Append("0 B");
+              }
+              builder.Append(' ', rightPadding);
+            }
+
           }
         }
       }
