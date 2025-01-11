@@ -333,7 +333,14 @@ public static partial class RecycleBin
         {
           try
           {
-            Directory.Delete(item.Path, true);
+            if (item.Type == "Compressed (zipped) Folder")
+            {
+              File.Delete(item.Path);
+            }
+            else
+            {
+              Directory.Delete(item.Path, true);
+            }
           }
           catch (Exception e) when (e is ArgumentNullException or ArgumentException)
           {
