@@ -58,8 +58,6 @@ public static class HelperFunctions
     int nameColumnWidth = list.Max(r => r.Name.Length) + 2;
 
     IEnumerable<FileDetails> fullWidthNames = from file in list where (ContainsFullWidthCharacters(file.Name) >= 1) select file;
-      //(List<FileDetails>)from file in list where (file.Name.Normalize(NormalizationForm.FormKC) != file.Name) select file;
-
 
     if (fullWidthNames.Any())
     {
@@ -77,6 +75,7 @@ public static class HelperFunctions
       {
         nameColumnWidth = maxFullWidthName;
       }
+      nameColumnWidth += 2;
     }
 
     string nameColumnHeader = "Name";
@@ -190,7 +189,7 @@ public static class HelperFunctions
             {
               int rightPadding = keyValue - property.GetValue(item).ToString().Length - 1;
               int fullWidthCharacterCount = ContainsFullWidthCharacters(property.GetValue(item).ToString());
-              if (fullWidthCharacterCount >= 0)
+              if (fullWidthCharacterCount >= 1)
               {
                 rightPadding = rightPadding - fullWidthCharacterCount;
               }
